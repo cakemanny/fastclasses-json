@@ -1,0 +1,7 @@
+# compiled python files
+*.pyc
+__pycache__/
+
+# virtual environment nonsense
+venv
+env
