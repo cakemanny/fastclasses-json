@@ -48,8 +48,6 @@ def _replace_from_dict(cls):
 
     cls.from_dict = classmethod(from_dict_func)
 
-    pass
-
 
 def _referenced_types(cls):
     # add typenames as args for referenced dataclasses
@@ -65,7 +63,7 @@ def _referenced_types(cls):
 
         if origin == list:
             type_arg = typing.get_args(field_type)[0]
-            if is_dataclass(type_arg):
+            if is_dataclass(type_arg) or issubclass(type_arg, Enum):
                 dc_types[type_arg.__name__] = type_arg
 
         elif is_dataclass(field_type):
@@ -96,7 +94,7 @@ def _from_dict_source(cls):
 
         if origin == list:
             type_arg = typing.get_args(field_type)[0]
-            if not is_dataclass(type_arg):
+            if not is_dataclass(type_arg) and not issubclass(type_arg, Enum):
                 type_arg = None
 
         access = f'o.get({name!r})'
@@ -107,11 +105,18 @@ def _from_dict_source(cls):
             lines.append(f'    value = {access}')
             lines.append(f'    if value is not None:')
             if type_arg is not None:
-                type_name = type_arg.__name__
-                lines.append(
-                    '        '
-                    f'value = [{type_name}.from_dict(x) for x in value]'
-                )
+                if is_dataclass(type_arg):
+                    type_name = type_arg.__name__
+                    lines.append(
+                        '        '
+                        f'value = [{type_name}.from_dict(x) for x in value]'
+                    )
+                else:
+                    type_name = type_arg.__name__
+                    lines.append(
+                        '        '
+                        f'value = [{type_name}(x) for x in value]'
+                    )
             elif is_dataclass(field_type):
                 type_name = field_type.__name__
                 lines.append(f'        value = {type_name}.from_dict(value)')

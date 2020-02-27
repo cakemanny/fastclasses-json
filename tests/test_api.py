@@ -129,7 +129,6 @@ def test_from_dict__nested():
     class B:
         a: A
 
-    assert B.from_dict
     assert B.from_dict({
         'a': {
             'a': 'xxx'
@@ -147,7 +146,6 @@ def test_from_dict__list_nested():
     class B:
         a: List[A]
 
-    assert B.from_dict
     assert B.from_dict({
         'a': [{
             'a': 'xxx',
@@ -167,7 +165,6 @@ def test_from_dict__optional_nested():
     class B:
         a: Optional[A]
 
-    assert B.from_dict
     assert B.from_dict({
         'a': {
             'a': 'xxx'
@@ -185,7 +182,6 @@ def test_from_dict__optional_list_nested():
     class B:
         a: Optional[List[A]]
 
-    assert B.from_dict
     assert B.from_dict({
         'a': [{
             'a': 'xxx',
@@ -205,7 +201,6 @@ def test_from_dict__optional_list_nested_with_defaults():
     class B:
         a: Optional[List[A]] = None
 
-    assert B.from_dict
     assert B.from_dict({
         'a': [{
             'a': 'xxx',
@@ -230,7 +225,6 @@ class B:
 
 def test_from_dict__string_type_name():
 
-    assert B.from_dict
     assert B.from_dict({
         'A': {
             's': 'yes',
@@ -250,7 +244,6 @@ class C:
 
 def test_from_dict__string_type_name__reverse_definition_order():
 
-    assert D.from_dict
     assert D.from_dict({
         'C': {
             's': 'yes',
@@ -269,6 +262,35 @@ def test_from_dict__enum():
     class B:
         a: A
 
-    assert B.from_dict
     assert B.from_dict({'a': 'ex'}) == B(A.X)
     assert B.from_dict({'a': 'why'}) == B(A.Y)
+
+
+def test_from_dict__optional_enum():
+    from enum import Enum
+
+    class A(Enum):
+        X = 'ex'
+        Y = 'why'
+
+    @dataclass_json
+    class B:
+        a: Optional[A]
+
+    assert B.from_dict({'a': 'ex'}) == B(A.X)
+    assert B.from_dict({'a': 'why'}) == B(A.Y)
+
+
+def test_from_dict__list_of_enum():
+    from enum import Enum
+
+    class A(Enum):
+        X = 'ex'
+        Y = 'why'
+
+    @dataclass_json
+    class B:
+        a: List[A]
+
+    assert B.from_dict({'a': ['ex']}) == B([A.X])
+    assert B.from_dict({'a': ['why']}) == B([A.Y])
