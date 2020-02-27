@@ -14,10 +14,6 @@ def dataclass_json(cls=None):
     return _wrap
 
 
-def _f():
-    return
-
-
 def _process_class(cls):
     # ensure this be a dataclass
     cls = dataclass(cls)
