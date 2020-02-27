@@ -2,8 +2,6 @@ from dataclasses import is_dataclass
 from typing import Optional, List
 import textwrap
 
-import pytest
-
 from fastclasses_json import api
 from fastclasses_json.api import dataclass_json
 
@@ -65,6 +63,30 @@ def test_from_dict_source__list_nested():
             value = o.get('a')
             if value is not None:
                 value = [A.from_dict(x) for x in value]
+            args.append(value)
+            return cls(*args)
+        """
+    )
+
+
+def test_from_dict_source__enum():
+    from enum import Enum
+
+    class A(Enum):
+        X = 'ex'
+        Y = 'why'
+
+    @dataclass_json
+    class B:
+        a: A
+
+    assert api._from_dict_source(B) == textwrap.dedent(
+        """\
+        def from_dict(cls, o, A):
+            args = []
+            value = o.get('a')
+            if value is not None:
+                value = A(value)
             args.append(value)
             return cls(*args)
         """
@@ -229,17 +251,17 @@ def test_from_dict__string_type_name__reverse_definition_order():
     }) == D(C('yes'))
 
 
-@pytest.mark.skip
 def test_from_dict__enum():
     from enum import Enum
 
     class A(Enum):
-        X = 'X'
-        Y = 'Y'
+        X = 'ex'
+        Y = 'why'
 
     @dataclass_json
     class B:
         a: A
 
     assert B.from_dict
-    assert B.from_dict({'a': 'X'}) == B(A.X)
+    assert B.from_dict({'a': 'ex'}) == B(A.X)
+    assert B.from_dict({'a': 'why'}) == B(A.Y)

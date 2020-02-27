@@ -1,4 +1,5 @@
 from dataclasses import dataclass, is_dataclass
+from enum import Enum
 import sys
 import types
 import typing
@@ -71,8 +72,12 @@ def _referenced_types(cls):
             if is_dataclass(type_arg):
                 dc_types[type_arg.__name__] = type_arg
 
-        if is_dataclass(field_type):
+        elif is_dataclass(field_type):
             dc_types[field_type.__name__] = field_type
+
+        elif issubclass(field_type, Enum):
+            dc_types[field_type.__name__] = field_type
+
     return dc_types
 
 
@@ -100,7 +105,9 @@ def _from_dict_source(cls):
 
         access = f'o.get({name!r})'
 
-        if type_arg is not None or is_dataclass(field_type):
+        if (type_arg is not None
+                or is_dataclass(field_type)
+                or issubclass(field_type, Enum)):
             lines.append(f'    value = {access}')
             lines.append(f'    if value is not None:')
             if type_arg is not None:
@@ -112,6 +119,9 @@ def _from_dict_source(cls):
             elif is_dataclass(field_type):
                 type_name = field_type.__name__
                 lines.append(f'        value = {type_name}.from_dict(value)')
+            elif issubclass(field_type, Enum):
+                type_name = field_type.__name__
+                lines.append(f'        value = {type_name}(value)')
             lines.append(f'    args.append(value)')
         else:
             lines.append(f'    args.append({access})')
