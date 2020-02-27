@@ -6,13 +6,9 @@ import typing
 
 
 def dataclass_json(cls=None):
-
-    def _wrap():
-        return _process_class(cls)
-
     if cls is not None:
-        return _wrap()
-    return _wrap
+        return _process_class(cls)
+    return _process_class
 
 
 def _process_class(cls):

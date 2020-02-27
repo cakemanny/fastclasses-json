@@ -15,6 +15,13 @@ def test_decorator():
     assert is_dataclass(A)
     assert is_dataclass(A(1))
 
+    @dataclass_json()
+    class B:
+        x: int
+
+    assert is_dataclass(B)
+    assert is_dataclass(B(1))
+
 
 def test_from_dict_source():
 
