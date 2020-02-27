@@ -209,6 +209,26 @@ def test_from_dict__string_type_name():
     }) == B(A('yes'))
 
 
+@dataclass_json
+class D:
+    C: Optional['C'] = None
+
+
+@dataclass_json
+class C:
+    s: str
+
+
+def test_from_dict__string_type_name__reverse_definition_order():
+
+    assert D.from_dict
+    assert D.from_dict({
+        'C': {
+            's': 'yes',
+        }
+    }) == D(C('yes'))
+
+
 @pytest.mark.skip
 def test_from_dict__enum():
     from enum import Enum

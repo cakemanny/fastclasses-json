@@ -22,6 +22,18 @@ def _process_class(cls):
     # ensure this be a dataclass
     cls = dataclass(cls)
 
+    # delay the building of our from_dict method until it is first called
+    def _temp_from_dict(cls, *args, **kwarg):
+        _replace_from_dict(cls)
+        return cls.from_dict(*args, **kwarg)
+
+    cls.from_dict = classmethod(_temp_from_dict)
+
+    return cls
+
+
+def _replace_from_dict(cls):
+
     from_dict_src = _from_dict_source(cls)
     from_dict_module = compile(
         from_dict_src, '<fastclass_generated_code>', 'exec'
@@ -43,7 +55,7 @@ def _process_class(cls):
 
     cls.from_dict = classmethod(from_dict_func)
 
-    return cls
+    pass
 
 
 def _referenced_types(cls):
