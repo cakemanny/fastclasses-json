@@ -1,9 +1,14 @@
 from dataclasses import is_dataclass
 from enum import Enum
 import typing
+import warnings
+
+from .utils import issubclass_safe
 
 
 def expr_builder(t: type, depth=0):
+    def identity(expr):
+        return expr
 
     origin = typing.get_origin(t)
 
@@ -24,17 +29,33 @@ def expr_builder(t: type, depth=0):
             t0 = f'__{depth}'
             return f'[{inner(t0)} for {t0} in {expr}]'
         return f
+    elif origin == dict:
+        key_type, value_type = typing.get_args(t)
+
+        if not issubclass_safe(key_type, str):
+            warnings.warn(f'to_json will not work for non-str key dict: {t}')
+            return identity
+
+        inner = expr_builder(value_type, depth + 1)
+
+        def f(expr):
+            k0 = f'__k{depth}'
+            v0 = f'__v{depth}'
+            return (
+                '{'
+                + f'{k0}: {inner(v0)} for {k0},{v0} in ({expr}).items()'
+                + '}'
+            )
+        return f
     elif is_dataclass(t):
         def f(expr):
             return f'{t.__name__}.from_dict({expr})'
         return f
-    elif issubclass(t, Enum):
+    elif issubclass_safe(t, Enum):
         def f(expr):
             return f'{t.__name__}({expr})'
         return f
 
-    def identity(expr):
-        return expr
     return identity
 
 
@@ -45,7 +66,10 @@ def referenced_types(cls):
         if origin == typing.Union or origin == list:
             type_arg = typing.get_args(t)[0]
             return extract_type(type_arg)
-        elif is_dataclass(t) or issubclass(t, Enum):
+        elif origin == dict:
+            value_type_arg = typing.get_args(t)[1]
+            return extract_type(value_type_arg)
+        elif is_dataclass(t) or issubclass_safe(t, Enum):
             return t
         return None
 

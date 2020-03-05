@@ -28,11 +28,9 @@ Supported Types
 * `typing.Optional[typing.List[T]]`
 * `typing.List[typing.Optional[T]]`
 * `typing.List[typing.List[typing.List[T]]]` etc
+* `typing.Dict[str, T]`
 * `enum.Enum` subclasses
 * Mutually recursive dataclasses.
-
-but not yet:
-* `typing.Dict[str, T]`
 
 any other types will just be left as is
 

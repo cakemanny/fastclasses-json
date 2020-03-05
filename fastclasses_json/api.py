@@ -1,9 +1,8 @@
-from dataclasses import dataclass
 import sys
 import types
 import typing
 
-from fastclasses_json.core import expr_builder, referenced_types
+from .core import expr_builder, referenced_types
 
 
 def dataclass_json(cls=None):

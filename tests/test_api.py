@@ -1,5 +1,5 @@
-from dataclasses import is_dataclass, dataclass
-from typing import Optional, List
+from dataclasses import dataclass
+from typing import Optional, List, Dict
 import textwrap
 
 from fastclasses_json import api
@@ -13,16 +13,16 @@ def test_decorator():
     class A:
         x: int
 
-    assert is_dataclass(A)
-    assert is_dataclass(A(1))
+    assert A.from_dict
+    assert A(1).from_dict
 
     @dataclass_json()
     @dataclass
     class B:
         x: int
 
-    assert is_dataclass(B)
-    assert is_dataclass(B(1))
+    assert B.from_dict
+    assert B(1).from_dict
 
 
 def test_from_dict_source():
@@ -318,3 +318,19 @@ def test_from_dict__list_of_enum():
 
     assert B.from_dict({'a': ['ex']}) == B([A.X])
     assert B.from_dict({'a': ['why']}) == B([A.Y])
+
+
+def test_from_dict__dict_of_enum():
+    from enum import Enum
+
+    class A(Enum):
+        X = 'ex'
+        Y = 'why'
+
+    @dataclass_json
+    @dataclass
+    class B:
+        a: Dict[str, A]
+
+    assert B.from_dict({'a': {'marky': 'ex'}}) == B({'marky': A.X})
+    assert B.from_dict({'a': {'marky': 'why'}}) == B({'marky': A.Y})

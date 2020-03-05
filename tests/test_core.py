@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from enum import Enum
-from typing import List, Optional
+from typing import List, Optional, Dict
 
 from fastclasses_json import core
 
@@ -55,6 +55,19 @@ def test_expr_builder__optional_enum():
     builder = core.expr_builder(t)
 
     assert builder('XXX') == 'A(__0) if (__0:=(XXX)) is not None else None'
+
+
+def test_expr_builder__dict_enum():
+
+    class A(Enum):
+        X = 'ex'
+        Y = 'why'
+
+    t = Dict[str, A]
+
+    builder = core.expr_builder(t)
+
+    assert builder('XXX') == '{__k0: A(__v0) for __k0,__v0 in (XXX).items()}'
 
 
 def test_references_types__enum():
