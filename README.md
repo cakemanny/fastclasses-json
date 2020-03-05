@@ -26,11 +26,12 @@ Supported Types
 * `typing.List[T]` where `T` is also decorated with `@dataclass_json`
 * `typing.Optional[T]`
 * `typing.Optional[typing.List[T]]`
+* `typing.List[typing.Optional[T]]`
+* `typing.List[typing.List[typing.List[T]]]` etc
 * `enum.Enum` subclasses
 * Mutually recursive dataclasses.
 
-but none of:
-* `typing.List[typing.Optional[T]]`
+but not yet:
 * `typing.Dict[str, T]`
 
 any other types will just be left as is
@@ -40,10 +41,12 @@ from __future__ import annotations
 from typing import Optional, List
 
 @dataclass_json
+@dataclass
 class Russian:
     doll: Optional[Doll]
 
 @dataclass_json
+@dataclass
 class Doll:
     russian: Optional[Russian]
 
@@ -57,6 +60,7 @@ class Mood(Enum):
     SAD = 'xml'
 
 @dataclass_json
+@dataclass
 class ILikeEnums:
     maybe_moods: Optional[List[Mood]]
 
@@ -66,10 +70,12 @@ ILikeEnums.from_dict({'maybe_moods': ['json']})  # ILikeEnums(maybe_moods=[Mood.
 
 ```
 
-we are not a drop-in replacement for Dataclasses JSON. There are plent
+we are not a drop-in replacement for Dataclasses JSON. There are plenty of
+cases to use this in spite
 
 ```python
 @dataclass_json
+@dataclass
 class ImBroken:
     when_will_i_get_fixed: datetime
 

@@ -1,4 +1,4 @@
-from dataclasses import is_dataclass
+from dataclasses import is_dataclass, dataclass
 from typing import Optional, List
 import textwrap
 
@@ -9,6 +9,7 @@ from fastclasses_json.api import dataclass_json
 def test_decorator():
 
     @dataclass_json
+    @dataclass
     class A:
         x: int
 
@@ -16,6 +17,7 @@ def test_decorator():
     assert is_dataclass(A(1))
 
     @dataclass_json()
+    @dataclass
     class B:
         x: int
 
@@ -56,10 +58,12 @@ def test_from_dict_source__optional():
 def test_from_dict_source__list_nested():
 
     @dataclass_json
+    @dataclass
     class A:
         a: str
 
     @dataclass_json
+    @dataclass
     class B:
         a: List[A]
 
@@ -69,7 +73,7 @@ def test_from_dict_source__list_nested():
             args = []
             value = o.get('a')
             if value is not None:
-                value = [A.from_dict(x) for x in value]
+                value = [A.from_dict(__0) for __0 in value]
             args.append(value)
             return cls(*args)
         """
@@ -84,6 +88,7 @@ def test_from_dict_source__enum():
         Y = 'why'
 
     @dataclass_json
+    @dataclass
     class B:
         a: A
 
@@ -103,6 +108,7 @@ def test_from_dict_source__enum():
 def test_from_dict():
 
     @dataclass_json
+    @dataclass
     class A:
         x: int
         y: str
@@ -113,6 +119,7 @@ def test_from_dict():
 def test_from_dict__optional():
 
     @dataclass_json
+    @dataclass
     class A:
         x: Optional[int]
 
@@ -122,10 +129,12 @@ def test_from_dict__optional():
 def test_from_dict__nested():
 
     @dataclass_json
+    @dataclass
     class A:
         a: str
 
     @dataclass_json
+    @dataclass
     class B:
         a: A
 
@@ -139,10 +148,12 @@ def test_from_dict__nested():
 def test_from_dict__list_nested():
 
     @dataclass_json
+    @dataclass
     class A:
         a: str
 
     @dataclass_json
+    @dataclass
     class B:
         a: List[A]
 
@@ -158,10 +169,12 @@ def test_from_dict__list_nested():
 def test_from_dict__optional_nested():
 
     @dataclass_json
+    @dataclass
     class A:
         a: str
 
     @dataclass_json
+    @dataclass
     class B:
         a: Optional[A]
 
@@ -175,10 +188,12 @@ def test_from_dict__optional_nested():
 def test_from_dict__optional_list_nested():
 
     @dataclass_json
+    @dataclass
     class A:
         a: str
 
     @dataclass_json
+    @dataclass
     class B:
         a: Optional[List[A]]
 
@@ -194,10 +209,12 @@ def test_from_dict__optional_list_nested():
 def test_from_dict__optional_list_nested_with_defaults():
 
     @dataclass_json
+    @dataclass
     class A:
         a: str
 
     @dataclass_json
+    @dataclass
     class B:
         a: Optional[List[A]] = None
 
@@ -214,11 +231,13 @@ def test_from_dict__optional_list_nested_with_defaults():
 # hints are evaluated, they are for the string_type_name
 
 @dataclass_json
+@dataclass
 class A:
     s: str
 
 
 @dataclass_json
+@dataclass
 class B:
     A: Optional['A'] = None
 
@@ -233,11 +252,13 @@ def test_from_dict__string_type_name():
 
 
 @dataclass_json
+@dataclass
 class D:
     C: Optional['C'] = None
 
 
 @dataclass_json
+@dataclass
 class C:
     s: str
 
@@ -259,6 +280,7 @@ def test_from_dict__enum():
         Y = 'why'
 
     @dataclass_json
+    @dataclass
     class B:
         a: A
 
@@ -274,6 +296,7 @@ def test_from_dict__optional_enum():
         Y = 'why'
 
     @dataclass_json
+    @dataclass
     class B:
         a: Optional[A]
 
@@ -289,6 +312,7 @@ def test_from_dict__list_of_enum():
         Y = 'why'
 
     @dataclass_json
+    @dataclass
     class B:
         a: List[A]
 
