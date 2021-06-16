@@ -540,3 +540,44 @@ def test_from_dict__dict_of_enum():
 
     assert B.from_dict({'a': {'marky': 'ex'}}) == B({'marky': A.X})
     assert B.from_dict({'a': {'marky': 'why'}}) == B({'marky': A.Y})
+
+
+def test_to_dict__date():
+    from datetime import date
+
+    @dataclass_json
+    @dataclass
+    class A:
+        x: date
+
+    assert A(date(2021, 6, 17)).to_dict() == {'x': "2021-06-17"}
+
+
+def test_from_dict__date():
+    from datetime import date
+
+    @dataclass_json
+    @dataclass
+    class A:
+        x: date
+
+    assert A.from_dict({'x': "2021-06-17"}) == A(date(2021, 6, 17))
+
+
+def test_from_dict__datetime():
+    from datetime import datetime, timezone
+
+    @dataclass_json
+    @dataclass
+    class A:
+        x: datetime
+
+    assert A.from_dict({'x': "2021-06-17"}) == A(datetime(2021, 6, 17))
+
+    assert A.from_dict({'x': "2021-06-17T10:00:00"}) \
+        == A(datetime(2021, 6, 17, 10, 0, 0,))
+
+    assert A.from_dict({'x': "2021-06-17T10:00:00+00:00"}) \
+        == A(datetime(2021, 6, 17, 10, 0, 0, tzinfo=timezone.utc))
+    assert A.from_dict({'x': "2021-06-17T10:00:00Z"}) \
+        == A(datetime(2021, 6, 17, 10, 0, 0, tzinfo=timezone.utc))

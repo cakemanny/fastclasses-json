@@ -79,10 +79,30 @@ def expr_builder(t: type, depth=0, direction=_FROM):
                 return f'({expr}).value'
             return f
 
+    from datetime import date, datetime
+    if issubclass_safe(t, datetime):
+        if direction == _FROM:
+            def f(expr):
+                t0 = f'__{depth}'
+                return (f'{t.__name__}.fromisoformat('
+                        f'{t0}[:-1]+"+00:00" if ({t0}:={expr})[-1]=="Z" '
+                        f'else {t0}'
+                        ')')
+            return f
+        else:
+            return lambda expr: f'({expr}).isoformat()'
+    if issubclass_safe(t, date):
+        if direction == _FROM:
+            # TODO: use dateutil.parser.isoparse if available?
+            return lambda expr: f'{t.__name__}.fromisoformat({expr})'
+        else:
+            return lambda expr: f'({expr}).isoformat()'
+
     return identity
 
 
 def referenced_types(cls):
+    from datetime import date, datetime
 
     def extract_type(t):
         origin = typing.get_origin(t)
@@ -92,7 +112,7 @@ def referenced_types(cls):
         elif origin == dict:
             value_type_arg = typing.get_args(t)[1]
             return extract_type(value_type_arg)
-        elif is_dataclass(t) or issubclass_safe(t, Enum):
+        elif is_dataclass(t) or issubclass_safe(t, (Enum, date, datetime)):
             return t
         return None
 

@@ -30,6 +30,7 @@ Supported Types
 * `typing.List[typing.List[typing.List[T]]]` etc
 * `typing.Dict[str, T]`
 * `enum.Enum` subclasses
+* `datetime.date` and `datetime.datetime` as ISO8601 format strings
 * Mutually recursive dataclasses.
 
 any other types will just be left as is
@@ -66,18 +67,16 @@ class ILikeEnums:
 ILikeEnums.from_dict({})  # ILikeEnums(maybe_moods=None)
 ILikeEnums.from_dict({'maybe_moods': ['json']})  # ILikeEnums(maybe_moods=[Mood.HAPPY])
 
+from datetime import date
+
+@dataclass_json
+@dataclass
+class Enitnelav:
+    romantic: date
+
+Enitnelav.from_dict({'romantic': '2021-06-17'})  # Enitnelav(romantic=datetime.date(2021, 6, 17))
+
 ```
 
 we are not a drop-in replacement for Dataclasses JSON. There are plenty of
-cases to use this in spite
-
-```python
-@dataclass_json
-@dataclass
-class ImBroken:
-    when_will_i_get_fixed: datetime
-
-ImBroken.from_dict({'when_will_i_get_fixed': 'soon 🤞'})
-# ImBroken(when_will_i_get_fixed='soon 🤞')
-
-```
+cases to use this in spite.
