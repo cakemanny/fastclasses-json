@@ -20,6 +20,12 @@ def _process_class(cls):
 
     cls.from_dict = classmethod(_temp_from_dict)
 
+    def _temp_to_dict(self, *args, **kwargs):
+        _replace_to_dict(cls)
+        return self.to_dict(*args, **kwargs)
+
+    cls.to_dict = _temp_to_dict
+
     return cls
 
 
@@ -45,6 +51,26 @@ def _replace_from_dict(cls):
     )
 
     cls.from_dict = classmethod(from_dict_func)
+
+
+def _replace_to_dict(cls):
+
+    to_dict_src = _to_dict_source(cls)
+    to_dict_module = compile(
+        to_dict_src, '<fastclass_generated_code>', 'exec'
+    )
+    to_dict_code = [
+        const for const in to_dict_module.co_consts
+        if isinstance(const, types.CodeType)
+    ][0]
+
+    to_dict_func = types.FunctionType(
+        to_dict_code,
+        sys.modules[cls.__module__].__dict__,
+        'to_dict',
+    )
+
+    cls.to_dict = to_dict_func
 
 
 def _from_dict_source(cls):
@@ -73,5 +99,26 @@ def _from_dict_source(cls):
         else:
             lines.append(f'    args.append({access})')
     lines.append('    return cls(*args)')
+    lines.append('')
+    return '\n'.join(lines)
+
+
+def _to_dict_source(cls):
+
+    dc_typenames = ''
+
+    lines = [
+        f'def to_dict(self, {dc_typenames}):',
+        f'    result = {{}}',
+    ]
+
+    for name, field_type in typing.get_type_hints(cls).items():
+
+        access = f'self.{name}'
+
+        # TODO: option for not including Nones
+        lines.append(f'    result[{name!r}] = {access}')
+
+    lines.append('    return result')
     lines.append('')
     return '\n'.join(lines)

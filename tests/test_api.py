@@ -16,6 +16,9 @@ def test_decorator():
     assert A.from_dict
     assert A(1).from_dict
 
+    assert A.to_dict
+    assert A(1).to_dict
+
     @dataclass_json()
     @dataclass
     class B:
@@ -23,6 +26,21 @@ def test_decorator():
 
     assert B.from_dict
     assert B(1).from_dict
+
+
+def test_to_dict_source():
+
+    class A:
+        x: int
+
+    assert api._to_dict_source(A) == textwrap.dedent(
+        """\
+        def to_dict(self, ):
+            result = {}
+            result['x'] = self.x
+            return result
+        """
+    )
 
 
 def test_from_dict_source():
@@ -103,6 +121,17 @@ def test_from_dict_source__enum():
             return cls(*args)
         """
     )
+
+
+def test_to_dict():
+
+    @dataclass_json
+    @dataclass
+    class A:
+        x: int
+        y: str
+
+    assert A(5, 'hi').to_dict() == {'x': 5, 'y': 'hi'}
 
 
 def test_from_dict():
