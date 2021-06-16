@@ -2,7 +2,7 @@ import sys
 import types
 import typing
 
-from .core import expr_builder, referenced_types
+from .core import expr_builder_from, expr_builder_to, referenced_types
 
 
 def dataclass_json(cls=None):
@@ -13,7 +13,9 @@ def dataclass_json(cls=None):
 
 def _process_class(cls):
 
-    # delay the building of our from_dict method until it is first called
+    # Delay the building of our from_dict method until it is first called.
+    # This allows the compilation to reference classes defined later in
+    # the module.
     def _temp_from_dict(cls, *args, **kwarg):
         _replace_from_dict(cls)
         return cls.from_dict(*args, **kwarg)
@@ -89,9 +91,9 @@ def _from_dict_source(cls):
 
         access = f'o.get({name!r})'
 
-        transform = expr_builder(field_type)
+        transform = expr_builder_from(field_type)
 
-        if (transform('x') != 'x'):
+        if transform('x') != 'x':
             lines.append(f'    value = {access}')
             lines.append(f'    if value is not None:')
             lines.append(f'        value = ' + transform('value'))
@@ -112,12 +114,29 @@ def _to_dict_source(cls):
         f'    result = {{}}',
     ]
 
+    # TODO: option for including Nones or not
+    INCLUDE_NONES = False
+
     for name, field_type in typing.get_type_hints(cls).items():
 
         access = f'self.{name}'
 
-        # TODO: option for not including Nones
-        lines.append(f'    result[{name!r}] = {access}')
+        transform = expr_builder_to(field_type)
+
+        if transform('x') != 'x':
+            # since we have an is not none check, elide the first level
+            # of optional
+            if typing.get_origin(field_type) == typing.Union:
+                transform = expr_builder_to(typing.get_args(field_type)[0])
+            lines.append(f'    value = {access}')
+            lines.append(f'    if value is not None:')
+            lines.append(f'        value = ' + transform('value'))
+            if INCLUDE_NONES:
+                lines.append(f'    result[{name!r}] = value')
+            else:
+                lines.append(f'        result[{name!r}] = value')
+        else:
+            lines.append(f'    result[{name!r}] = {access}')
 
     lines.append('    return result')
     lines.append('')

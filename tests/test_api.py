@@ -145,6 +145,17 @@ def test_from_dict():
     assert A.from_dict({'x': 5, 'y': 'hi'}) == A(5, 'hi')
 
 
+def test_to_dict__optional():
+
+    @dataclass_json
+    @dataclass
+    class A:
+        x: Optional[int]
+
+    assert A(None).to_dict() == {}
+    assert A(1).to_dict() == {'x': 1}
+
+
 def test_from_dict__optional():
 
     @dataclass_json
@@ -153,6 +164,25 @@ def test_from_dict__optional():
         x: Optional[int]
 
     assert A.from_dict({}) == A(None)
+
+
+def test_to_dict__nested():
+
+    @dataclass_json
+    @dataclass
+    class A:
+        a: str
+
+    @dataclass_json
+    @dataclass
+    class B:
+        a: A
+
+    assert B(A('xxx')).to_dict() == {
+        'a': {
+            'a': 'xxx'
+        }
+    }
 
 
 def test_from_dict__nested():
@@ -172,6 +202,27 @@ def test_from_dict__nested():
             'a': 'xxx'
         }
     }) == B(A('xxx'))
+
+
+def test_to_dict__list_nested():
+
+    @dataclass_json
+    @dataclass
+    class A:
+        a: str
+
+    @dataclass_json
+    @dataclass
+    class B:
+        a: List[A]
+
+    assert B([A('xxx'), A('yyy')]).to_dict() == {
+        'a': [{
+            'a': 'xxx',
+        }, {
+            'a': 'yyy',
+        }]
+    }
 
 
 def test_from_dict__list_nested():
@@ -195,6 +246,26 @@ def test_from_dict__list_nested():
     }) == B([A('xxx'), A('yyy')])
 
 
+def test_to_dict__optional_nested():
+
+    @dataclass_json
+    @dataclass
+    class A:
+        a: str
+
+    @dataclass_json
+    @dataclass
+    class B:
+        a: Optional[A]
+
+    assert B(A('xxx')).to_dict() == {
+        'a': {
+            'a': 'xxx'
+        }
+    }
+    assert B(None).to_dict() == {}
+
+
 def test_from_dict__optional_nested():
 
     @dataclass_json
@@ -212,6 +283,28 @@ def test_from_dict__optional_nested():
             'a': 'xxx'
         }
     }) == B(A('xxx'))
+
+
+def test_to_dict__optional_list_nested():
+
+    @dataclass_json
+    @dataclass
+    class A:
+        a: str
+
+    @dataclass_json
+    @dataclass
+    class B:
+        a: Optional[List[A]]
+
+    assert B([A('xxx'), A('yyy')]).to_dict() == {
+        'a': [{
+            'a': 'xxx',
+        }, {
+            'a': 'yyy',
+        }]
+    }
+    assert B(None).to_dict() == {}
 
 
 def test_from_dict__optional_list_nested():
@@ -280,6 +373,15 @@ def test_from_dict__string_type_name():
     }) == B(A('yes'))
 
 
+def test_to_dict__string_type_name():
+
+    assert B(A('yes')).to_dict() == {
+        'A': {
+            's': 'yes',
+        }
+    }
+
+
 @dataclass_json
 @dataclass
 class D:
@@ -301,6 +403,31 @@ def test_from_dict__string_type_name__reverse_definition_order():
     }) == D(C('yes'))
 
 
+def test_to_dict__string_type_name__reverse_definition_order():
+
+    assert D(C('yes')).to_dict() == {
+        'C': {
+            's': 'yes',
+        }
+    }
+
+
+def test_to_dict__enum():
+    from enum import Enum
+
+    class A(Enum):
+        X = 'ex'
+        Y = 'why'
+
+    @dataclass_json
+    @dataclass
+    class B:
+        a: A
+
+    assert B(A.X).to_dict() == {'a': 'ex'}
+    assert B(A.Y).to_dict() == {'a': 'why'}
+
+
 def test_from_dict__enum():
     from enum import Enum
 
@@ -317,6 +444,23 @@ def test_from_dict__enum():
     assert B.from_dict({'a': 'why'}) == B(A.Y)
 
 
+def test_to_dict__optional_enum():
+    from enum import Enum
+
+    class A(Enum):
+        X = 'ex'
+        Y = 'why'
+
+    @dataclass_json
+    @dataclass
+    class B:
+        a: Optional[A]
+
+    assert B(A.X).to_dict() == {'a': 'ex'}
+    assert B(A.Y).to_dict() == {'a': 'why'}
+    assert B(None).to_dict() == {}
+
+
 def test_from_dict__optional_enum():
     from enum import Enum
 
@@ -331,6 +475,23 @@ def test_from_dict__optional_enum():
 
     assert B.from_dict({'a': 'ex'}) == B(A.X)
     assert B.from_dict({'a': 'why'}) == B(A.Y)
+    assert B.from_dict({}) == B(None)
+
+
+def test_to_dict__list_of_enum():
+    from enum import Enum
+
+    class A(Enum):
+        X = 'ex'
+        Y = 'why'
+
+    @dataclass_json
+    @dataclass
+    class B:
+        a: List[A]
+
+    assert B([A.X]).to_dict() == {'a': ['ex']}
+    assert B([A.Y]).to_dict() == {'a': ['why']}
 
 
 def test_from_dict__list_of_enum():
@@ -347,6 +508,22 @@ def test_from_dict__list_of_enum():
 
     assert B.from_dict({'a': ['ex']}) == B([A.X])
     assert B.from_dict({'a': ['why']}) == B([A.Y])
+
+
+def test_to_dict__dict_of_enum():
+    from enum import Enum
+
+    class A(Enum):
+        X = 'ex'
+        Y = 'why'
+
+    @dataclass_json
+    @dataclass
+    class B:
+        a: Dict[str, A]
+
+    assert B({'marky': A.X}).to_dict() == {'a': {'marky': 'ex'}}
+    assert B({'marky': A.Y}).to_dict() == {'a': {'marky': 'why'}}
 
 
 def test_from_dict__dict_of_enum():
