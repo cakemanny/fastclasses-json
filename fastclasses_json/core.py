@@ -12,9 +12,22 @@ _TO = 2
 
 
 def _process_class(cls):
+    import json
+
     _process_class_internal(cls)
     cls.from_dict = cls._fastclasses_json_from_dict
     cls.to_dict = cls._fastclasses_json_to_dict
+
+    def from_json(cls, json_data):
+        return cls.from_dict(json.loads(json_data))
+
+    def to_json(self, *, separators=None, indent=None):
+        if indent is None and separators is None:
+            separators = (',', ':')
+        return json.dumps(self.to_dict(), separators=separators, indent=indent)
+
+    cls.from_json = classmethod(from_json)
+    cls.to_json = to_json
     return cls
 
 
@@ -205,6 +218,9 @@ def expr_builder(t: type, depth=0, direction=_FROM):
         # trashing their public API
         if not hasattr(t, '_fastclasses_json_from_dict'):
             _process_class_internal(t)
+
+        # TODO: consider calling to_dict, from_dict if they are there
+        # i.e. create a way for serialization to be overridden
 
         if direction == _FROM:
             def f(expr):

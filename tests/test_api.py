@@ -51,6 +51,36 @@ def test_from_dict():
     assert A.from_dict({'x': 5, 'y': 'hi'}) == A(5, 'hi')
 
 
+def test_to_json():
+
+    @dataclass_json
+    @dataclass
+    class A:
+        x: int
+        y: str
+
+    assert A(5, 'hi').to_json() == '{"x":5,"y":"hi"}'
+    import textwrap
+    assert A(5, 'hi').to_json(indent=2) == textwrap.dedent(
+        """\
+        {
+          "x": 5,
+          "y": "hi"
+        }"""
+    )
+
+
+def test_from_json():
+
+    @dataclass_json
+    @dataclass
+    class A:
+        x: int
+        y: str
+
+    assert A.from_json('{"x":5,"y":"hi"}') == A(5, 'hi')
+
+
 def test_to_dict__optional():
 
     @dataclass_json
