@@ -35,7 +35,7 @@ def test_to_dict_source():
 
     assert api._to_dict_source(A) == textwrap.dedent(
         """\
-        def to_dict(self, ):
+        def to_dict(self):
             result = {}
             result['x'] = self.x
             return result
@@ -50,7 +50,7 @@ def test_from_dict_source():
 
     assert api._from_dict_source(A) == textwrap.dedent(
         """\
-        def from_dict(cls, o, ):
+        def from_dict(cls, o):
             args = []
             args.append(o.get('x'))
             return cls(*args)
@@ -65,7 +65,7 @@ def test_from_dict_source__optional():
 
     assert api._from_dict_source(A) == textwrap.dedent(
         """\
-        def from_dict(cls, o, ):
+        def from_dict(cls, o):
             args = []
             args.append(o.get('x'))
             return cls(*args)
@@ -87,7 +87,7 @@ def test_from_dict_source__list_nested():
 
     assert api._from_dict_source(B) == textwrap.dedent(
         """\
-        def from_dict(cls, o, A):
+        def from_dict(cls, o):
             args = []
             value = o.get('a')
             if value is not None:
@@ -112,7 +112,7 @@ def test_from_dict_source__enum():
 
     assert api._from_dict_source(B) == textwrap.dedent(
         """\
-        def from_dict(cls, o, A):
+        def from_dict(cls, o):
             args = []
             value = o.get('a')
             if value is not None:

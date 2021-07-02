@@ -42,14 +42,17 @@ def _replace_from_dict(cls):
         if isinstance(const, types.CodeType)
     ][0]
 
-    argdefs = tuple(referenced_types(cls).values())
+    the_globals = {
+        # use the defining modules globals
+        **sys.modules[cls.__module__].__dict__,
+        # along with types we use for the conversion
+        **referenced_types(cls)
+    }
 
     from_dict_func = types.FunctionType(
         from_dict_code,
-        # use the defining modules globals
-        sys.modules[cls.__module__].__dict__,
+        the_globals,
         'from_dict',
-        argdefs=argdefs,
     )
 
     cls.from_dict = classmethod(from_dict_func)
@@ -77,11 +80,9 @@ def _replace_to_dict(cls):
 
 def _from_dict_source(cls):
 
-    dc_typenames = ','.join(referenced_types(cls).keys())
-
     lines = [
-        f'def from_dict(cls, o, {dc_typenames}):',
-        f'    args = []',
+        'def from_dict(cls, o):',
+        '    args = []',
     ]
     for name, field_type in typing.get_type_hints(cls).items():
 
@@ -95,9 +96,9 @@ def _from_dict_source(cls):
 
         if transform('x') != 'x':
             lines.append(f'    value = {access}')
-            lines.append(f'    if value is not None:')
-            lines.append(f'        value = ' + transform('value'))
-            lines.append(f'    args.append(value)')
+            lines.append(f'    if value is not None:')  # noqa: F541
+            lines.append(f'        value = ' + transform('value'))  # noqa: E501,F541
+            lines.append(f'    args.append(value)')  # noqa: F541
         else:
             lines.append(f'    args.append({access})')
     lines.append('    return cls(*args)')
@@ -107,11 +108,9 @@ def _from_dict_source(cls):
 
 def _to_dict_source(cls):
 
-    dc_typenames = ''
-
     lines = [
-        f'def to_dict(self, {dc_typenames}):',
-        f'    result = {{}}',
+        'def to_dict(self):',
+        '    result = {}',
     ]
 
     # TODO: option for including Nones or not
