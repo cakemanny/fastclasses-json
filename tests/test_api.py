@@ -1,8 +1,6 @@
 from dataclasses import dataclass
 from typing import Optional, List, Dict
-import textwrap
 
-from fastclasses_json import api
 from fastclasses_json.api import dataclass_json
 
 
@@ -27,100 +25,8 @@ def test_decorator():
     assert B.from_dict
     assert B(1).from_dict
 
-
-def test_to_dict_source():
-
-    class A:
-        x: int
-
-    assert api._to_dict_source(A) == textwrap.dedent(
-        """\
-        def to_dict(self):
-            result = {}
-            result['x'] = self.x
-            return result
-        """
-    )
-
-
-def test_from_dict_source():
-
-    class A:
-        x: int
-
-    assert api._from_dict_source(A) == textwrap.dedent(
-        """\
-        def from_dict(cls, o):
-            args = []
-            args.append(o.get('x'))
-            return cls(*args)
-        """
-    )
-
-
-def test_from_dict_source__optional():
-
-    class A:
-        x: Optional[int]
-
-    assert api._from_dict_source(A) == textwrap.dedent(
-        """\
-        def from_dict(cls, o):
-            args = []
-            args.append(o.get('x'))
-            return cls(*args)
-        """
-    )
-
-
-def test_from_dict_source__list_nested():
-
-    @dataclass_json
-    @dataclass
-    class A:
-        a: str
-
-    @dataclass_json
-    @dataclass
-    class B:
-        a: List[A]
-
-    assert api._from_dict_source(B) == textwrap.dedent(
-        """\
-        def from_dict(cls, o):
-            args = []
-            value = o.get('a')
-            if value is not None:
-                value = [A.from_dict(__0) for __0 in value]
-            args.append(value)
-            return cls(*args)
-        """
-    )
-
-
-def test_from_dict_source__enum():
-    from enum import Enum
-
-    class A(Enum):
-        X = 'ex'
-        Y = 'why'
-
-    @dataclass_json
-    @dataclass
-    class B:
-        a: A
-
-    assert api._from_dict_source(B) == textwrap.dedent(
-        """\
-        def from_dict(cls, o):
-            args = []
-            value = o.get('a')
-            if value is not None:
-                value = A(value)
-            args.append(value)
-            return cls(*args)
-        """
-    )
+    assert B.to_dict
+    assert B(1).to_dict
 
 
 def test_to_dict():
@@ -168,7 +74,6 @@ def test_from_dict__optional():
 
 def test_to_dict__nested():
 
-    @dataclass_json
     @dataclass
     class A:
         a: str
@@ -187,7 +92,6 @@ def test_to_dict__nested():
 
 def test_from_dict__nested():
 
-    @dataclass_json
     @dataclass
     class A:
         a: str
@@ -206,7 +110,6 @@ def test_from_dict__nested():
 
 def test_to_dict__list_nested():
 
-    @dataclass_json
     @dataclass
     class A:
         a: str
@@ -227,7 +130,6 @@ def test_to_dict__list_nested():
 
 def test_from_dict__list_nested():
 
-    @dataclass_json
     @dataclass
     class A:
         a: str
@@ -248,7 +150,6 @@ def test_from_dict__list_nested():
 
 def test_to_dict__optional_nested():
 
-    @dataclass_json
     @dataclass
     class A:
         a: str
@@ -268,7 +169,6 @@ def test_to_dict__optional_nested():
 
 def test_from_dict__optional_nested():
 
-    @dataclass_json
     @dataclass
     class A:
         a: str
@@ -287,7 +187,6 @@ def test_from_dict__optional_nested():
 
 def test_to_dict__optional_list_nested():
 
-    @dataclass_json
     @dataclass
     class A:
         a: str
@@ -309,7 +208,6 @@ def test_to_dict__optional_list_nested():
 
 def test_from_dict__optional_list_nested():
 
-    @dataclass_json
     @dataclass
     class A:
         a: str
@@ -330,7 +228,6 @@ def test_from_dict__optional_list_nested():
 
 def test_from_dict__optional_list_nested_with_defaults():
 
-    @dataclass_json
     @dataclass
     class A:
         a: str
@@ -352,7 +249,6 @@ def test_from_dict__optional_list_nested_with_defaults():
 # These have to be defined at the module level since that's where string type
 # hints are evaluated, they are for the string_type_name
 
-@dataclass_json
 @dataclass
 class A:
     s: str
@@ -388,7 +284,6 @@ class D:
     C: Optional['C'] = None
 
 
-@dataclass_json
 @dataclass
 class C:
     s: str

@@ -1,5 +1,7 @@
 from dataclasses import is_dataclass
 from enum import Enum
+import sys
+import types
 import typing
 import warnings
 
@@ -7,6 +9,146 @@ from .utils import issubclass_safe
 
 _FROM = 1
 _TO = 2
+
+
+def _process_class(cls):
+    _process_class_internal(cls)
+    cls.from_dict = cls._fastclasses_json_from_dict
+    cls.to_dict = cls._fastclasses_json_to_dict
+    return cls
+
+
+def _process_class_internal(cls):
+
+    # Delay the building of our from_dict method until it is first called.
+    # This allows the compilation to reference classes defined later in
+    # the module.
+    def _temp_from_dict(cls, *args, **kwarg):
+        _replace_from_dict(cls, '_fastclasses_json_from_dict')
+        return cls._fastclasses_json_from_dict(*args, **kwarg)
+
+    cls.from_dict = classmethod(_temp_from_dict)
+    cls._fastclasses_json_from_dict = classmethod(_temp_from_dict)
+
+    def _temp_to_dict(self, *args, **kwargs):
+        _replace_to_dict(cls, '_fastclasses_json_to_dict')
+        return self._fastclasses_json_to_dict(*args, **kwargs)
+
+    cls.to_dict = _temp_to_dict
+    cls._fastclasses_json_to_dict = _temp_to_dict
+
+    return cls
+
+
+def _replace_from_dict(cls, from_dict='from_dict'):
+
+    from_dict_src = _from_dict_source(cls)
+    from_dict_module = compile(
+        from_dict_src, '<fastclass_generated_code>', 'exec'
+    )
+    from_dict_code = [
+        const for const in from_dict_module.co_consts
+        if isinstance(const, types.CodeType)
+    ][0]
+
+    the_globals = {
+        # use the defining modules globals
+        **sys.modules[cls.__module__].__dict__,
+        # along with types we use for the conversion
+        **referenced_types(cls)
+    }
+
+    from_dict_func = types.FunctionType(
+        from_dict_code,
+        the_globals,
+        from_dict,
+    )
+
+    setattr(cls, from_dict, classmethod(from_dict_func))
+
+
+def _replace_to_dict(cls, to_dict='to_dict'):
+
+    to_dict_src = _to_dict_source(cls)
+    to_dict_module = compile(
+        to_dict_src, '<fastclass_generated_code>', 'exec'
+    )
+    to_dict_code = [
+        const for const in to_dict_module.co_consts
+        if isinstance(const, types.CodeType)
+    ][0]
+
+    to_dict_func = types.FunctionType(
+        to_dict_code,
+        sys.modules[cls.__module__].__dict__,
+        to_dict,
+    )
+
+    setattr(cls, to_dict, to_dict_func)
+
+
+def _from_dict_source(cls):
+
+    lines = [
+        'def from_dict(cls, o):',
+        '    args = []',
+    ]
+    for name, field_type in typing.get_type_hints(cls).items():
+
+        # pop off the top layer of optional, since we are using o.get
+        if typing.get_origin(field_type) == typing.Union:
+            field_type = typing.get_args(field_type)[0]
+
+        access = f'o.get({name!r})'
+
+        transform = expr_builder_from(field_type)
+
+        if transform('x') != 'x':
+            lines.append(f'    value = {access}')
+            lines.append(f'    if value is not None:')  # noqa: F541
+            lines.append(f'        value = ' + transform('value'))  # noqa: E501,F541
+            lines.append(f'    args.append(value)')  # noqa: F541
+        else:
+            lines.append(f'    args.append({access})')
+    lines.append('    return cls(*args)')
+    lines.append('')
+    return '\n'.join(lines)
+
+
+def _to_dict_source(cls):
+
+    lines = [
+        'def to_dict(self):',
+        '    result = {}',
+    ]
+
+    # TODO: option for including Nones or not
+    INCLUDE_NONES = False
+
+    for name, field_type in typing.get_type_hints(cls).items():
+
+        access = f'self.{name}'
+
+        transform = expr_builder_to(field_type)
+
+        if transform('x') != 'x':
+            # since we have an is not none check, elide the first level
+            # of optional
+            if typing.get_origin(field_type) == typing.Union:
+                transform = expr_builder_to(typing.get_args(field_type)[0])
+            lines.append(f'    value = {access}')
+            lines.append(f'    if value is not None:')  # noqa: F541
+            lines.append(f'        value = ' + transform('value'))  # noqa: E501,F541
+            if INCLUDE_NONES:
+                lines.append(f'    result[{name!r}] = value')
+            else:
+                lines.append(f'        result[{name!r}] = value')
+        else:
+            lines.append(f'    result[{name!r}] = {access}')
+
+    lines.append('    return result')
+    lines.append('')
+    return '\n'.join(lines)
 
 
 def expr_builder_from(t: type, depth=0):
@@ -59,15 +201,20 @@ def expr_builder(t: type, depth=0, direction=_FROM):
             )
         return f
     elif is_dataclass(t):
+        # Give indirectly referenced dataclassses a to_dict method without
+        # trashing their public API
+        if not hasattr(t, '_fastclasses_json_from_dict'):
+            _process_class_internal(t)
+
         if direction == _FROM:
             def f(expr):
-                return f'{t.__name__}.from_dict({expr})'
+                return f'{t.__name__}._fastclasses_json_from_dict({expr})'
             return f
         else:
             def f(expr):
                 # or should be have a function that takes the class and its
                 # type?
-                return f'({expr}).to_dict()'
+                return f'({expr})._fastclasses_json_to_dict()'
             return f
     elif issubclass_safe(t, Enum):
         if direction == _FROM:
