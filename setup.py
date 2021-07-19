@@ -19,6 +19,7 @@ setup(
         'dev': [
             'pytest',
             'flake8',
+            'mypy',
         ]
     },
 )
