@@ -18,10 +18,11 @@ class B:
 a = A("hi")
 
 if typing.TYPE_CHECKING:
-    reveal_type(a.to_dict)
-    reveal_type(A.from_dict)
-    reveal_type(A.from_dict({'x': 'hi'}))
-    reveal_type(A.from_json('{"x":"hi"}'))
+    # Should we have some some asserts in here...? 🤷
+    reveal_type(a.to_dict)  # noqa: F821
+    reveal_type(A.from_dict)  # noqa: F821
+    reveal_type(A.from_dict({'x': 'hi'}))  # noqa: F821
+    reveal_type(A.from_json('{"x":"hi"}'))  # noqa: F821
 print(a.to_json())
 print(A.from_dict({'x': 'hi'}))
 print(A.from_json('{"x":"hi"}'))
