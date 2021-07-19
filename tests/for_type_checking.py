@@ -17,8 +17,9 @@ class B:
 
 a = A("hi")
 
-if typing.TYPE_CHECKING:
-    # Should we have some some asserts in here...? 🤷
+# erm... change this to True when playing with the mypy module
+if typing.TYPE_CHECKING and False:
+    # Should/can we have some asserts in here...? 🤷
     reveal_type(a.to_dict)  # noqa: F821
     reveal_type(A.from_dict)  # noqa: F821
     reveal_type(A.from_dict({'x': 'hi'}))  # noqa: F821
