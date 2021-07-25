@@ -80,3 +80,56 @@ Enitnelav.from_dict({'romantic': '2021-06-17'})  # Enitnelav(romantic=datetime.d
 
 we are not a drop-in replacement for Dataclasses JSON. There are plenty of
 cases to use this in spite.
+
+
+Type checking (i.e. using mypy)
+-------------------------------
+
+If using type annotations in your code, you may notice type errors when type
+checking classes that use the `@dataclass_json` decorator.
+
+```
+% mypy tests/for_type_checking.py
+tests/for_type_checking.py:27: error: "A" has no attribute "to_json"
+tests/for_type_checking.py:28: error: "Type[A]" has no attribute "from_dict"
+```
+
+There are two techniques for overcoming this, one which is simpler but likely
+to break or be unstable between versions of python and mypy; and one which
+is a bit more work on your part.
+
+### Mypy plugin
+
+Changes in python and mypy are likely to lead to a game of cat and mouse, but
+for the moment, we have a plugin that you can configure in your `setup.cfg`
+
+```
+% cat setup.cfg
+[mypy]
+plugins = fastclasses_json.mypy_plugin
+```
+
+### Mixin with stub methods
+
+There is a mixin containing stub methods for converting to and from dicts and
+JSON. This can be useful if the mypy plugin breaks or if you are using a
+different type checker.
+
+```python
+from dataclasses import dataclass
+from fastclasses_json import dataclass_json, JSONMixin
+
+@dataclass_json
+@dataclass
+class SimpleTypedExample(JSONMixin):
+    what_a_lot_of_hassle_these_types_eh: str
+
+print(SimpleTypedExample.from_dict({'what_a_lot_of_hassle_these_types_eh': 'yes'}))
+```
+```
+% mypy that_listing_above.py
+Success: no issues found in 1 source file
+```
+
+Notice that you have to use both the `@dataclass_json` decorator and the
+`JSONMixin` mixin. How very annoying!
