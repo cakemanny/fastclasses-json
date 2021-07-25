@@ -27,6 +27,8 @@ if typing.TYPE_CHECKING and False:
     reveal_type(A.from_json('{"x":"hi"}'))  # noqa: F821
     reveal_type(A.to_json)  # noqa: F821
 print(a.to_json())
+print(a.to_json(indent=2))
+print(a.to_json(separators=(':', ',')))
 print(A.from_dict({'x': 'hi'}))
 print(A.from_json('{"x":"hi"}'))
 print(A.from_json(b'{"x":"hi"}'))
