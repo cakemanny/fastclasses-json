@@ -1,11 +1,11 @@
 from mypy.plugin import Plugin, ClassDefContext
 from mypy.plugins.common import add_method_to_class
 
-from mypy.types import AnyType, TypeOfAny, CallableType, UnionType
+from mypy.types import AnyType, TypeOfAny, CallableType, UnionType, NoneType
 from mypy.typevars import fill_typevars
 from mypy.nodes import (
-    ARG_POS, MDEF, Argument, Var, FuncDef, Block, PassStmt, Decorator,
-    SymbolTableNode
+    ARG_POS, ARG_NAMED_OPT, MDEF, Argument, Var, FuncDef, Block, PassStmt,
+    Decorator, SymbolTableNode
 )
 from mypy.semanal import set_callable_name
 from mypy.util import get_unique_redefinition_name
@@ -26,9 +26,25 @@ def plugin(version: str):
 def update_dataclass_json_type(ctx: ClassDefContext) -> None:
 
     str_type = ctx.api.named_type('__builtins__.str')
-    # TODO: add arguments for separators and indent
+    int_type = ctx.api.named_type('__builtins__.int')
+
+    sep_type = UnionType.make_union([
+        ctx.api.named_type('__builtins__.tuple', [str_type, str_type]),
+        NoneType()
+    ])
+    indent_type = UnionType.make_union([int_type, NoneType()])
+
+    args = [
+        Argument(
+            Var('separators', sep_type), sep_type, None, ARG_NAMED_OPT
+        ),
+        Argument(
+            Var('indent', indent_type), indent_type, None, ARG_NAMED_OPT
+        ),
+    ]
+
     add_method_to_class(
-        ctx.api, ctx.cls, 'to_json', args=[], return_type=str_type
+        ctx.api, ctx.cls, 'to_json', args=args, return_type=str_type
     )
 
     # It would be lovely to actually have this return a typed dict ;)
