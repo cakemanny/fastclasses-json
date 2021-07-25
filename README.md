@@ -1,7 +1,7 @@
 Fastclasses JSON
 ================
 
-![CI](https://github.com/cakemanny/fastclasses-json/actions/workflows/pythonpackage.yml/badge.svg)
+[![CI](https://github.com/cakemanny/fastclasses-json/actions/workflows/pythonpackage.yml/badge.svg)](https://github.com/cakemanny/fastclasses-json/actions/workflows/pythonpackage.yml?query=branch%3Amaster)
 [![PyPI](https://img.shields.io/pypi/v/fastclasses-json)](https://pypi.org/project/fastclasses-json/)
 
 Inspired by [Dataclasses JSON](https://github.com/lidatong/dataclasses-json/).
@@ -20,7 +20,12 @@ class SimpleExample:
     str_field: str
 
 SimpleExample.from_dict({'str_field': 'howdy!'})
+SimpleExample.from_json('{"str_field": "howdy!"}')
 # SimpleExample(str_field='howdy!')
+SimpleExample('hi!').to_dict()
+# {'str_field': 'hi!'}
+SimpleExample('hi!').to_json()
+# '{"str_field":"hi!"}'
 
 ```
 
@@ -54,6 +59,8 @@ class Doll:
 
 Russian.from_dict({'doll': {'russian': {'doll': None}}})
 # Russian(doll=Doll(russian=Russian(doll=None)))
+Russian(Doll(Russian(None))).to_dict()
+# {'doll': {'russian': {}}}
 
 from enum import Enum
 
@@ -69,6 +76,7 @@ class ILikeEnums:
 
 ILikeEnums.from_dict({})  # ILikeEnums(maybe_moods=None)
 ILikeEnums.from_dict({'maybe_moods': ['json']})  # ILikeEnums(maybe_moods=[Mood.HAPPY])
+ILikeEnums(maybe_moods=[Mood.HAPPY]).to_dict()  # {'maybe_moods': ['json']}
 
 from datetime import date
 
@@ -78,6 +86,7 @@ class Enitnelav:
     romantic: date
 
 Enitnelav.from_dict({'romantic': '2021-06-17'})  # Enitnelav(romantic=datetime.date(2021, 6, 17))
+Enitnelav(romantic=date(2021, 6, 17)).to_dict()  # {'romantic': '2021-06-17'}
 
 ```
 
