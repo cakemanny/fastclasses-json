@@ -31,3 +31,7 @@ jobs:
       run: |
         pip install pytest
         pytest
+    - name: Test mypy module
+      run: |
+        pip install mypy
+        mypy tests/for_type_checking.py
