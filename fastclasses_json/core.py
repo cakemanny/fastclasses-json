@@ -15,8 +15,19 @@ def _process_class(cls):
     import json
 
     _process_class_internal(cls)
-    cls.from_dict = cls._fastclasses_json_from_dict
-    cls.to_dict = cls._fastclasses_json_to_dict
+
+    def from_dict(cls, *args, **kwargs):
+        inst = cls._fastclasses_json_from_dict(*args, **kwargs)
+        cls.from_dict = cls._fastclasses_json_from_dict
+        return inst
+
+    def to_dict(self, *args, **kwargs):
+        d = self._fastclasses_json_to_dict(*args, **kwargs)
+        cls.to_dict = cls._fastclasses_json_to_dict
+        return d
+
+    cls.from_dict = classmethod(from_dict)
+    cls.to_dict = to_dict
 
     def from_json(cls, json_data):
         return cls.from_dict(json.loads(json_data))
@@ -40,14 +51,12 @@ def _process_class_internal(cls):
         _replace_from_dict(cls, '_fastclasses_json_from_dict')
         return cls._fastclasses_json_from_dict(*args, **kwarg)
 
-    cls.from_dict = classmethod(_temp_from_dict)
     cls._fastclasses_json_from_dict = classmethod(_temp_from_dict)
 
     def _temp_to_dict(self, *args, **kwargs):
         _replace_to_dict(cls, '_fastclasses_json_to_dict')
         return self._fastclasses_json_to_dict(*args, **kwargs)
 
-    cls.to_dict = _temp_to_dict
     cls._fastclasses_json_to_dict = _temp_to_dict
 
     return cls
