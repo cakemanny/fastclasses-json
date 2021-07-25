@@ -1,6 +1,9 @@
 Fastclasses JSON
 ================
 
+![CI](https://github.com/cakemanny/fastclasses-json/actions/workflows/pythonpackage.yml/badge.svg)
+[![PyPI](https://img.shields.io/pypi/v/fastclasses-json)](https://pypi.org/project/fastclasses-json/)
+
 Inspired by [Dataclasses JSON](https://github.com/lidatong/dataclasses-json/).
 This library attempts provide some basic functionality for encoding and
 decoding [dataclasses](https://docs.python.org/3/library/dataclasses.html)
