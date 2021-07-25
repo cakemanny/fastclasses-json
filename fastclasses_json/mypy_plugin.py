@@ -1,7 +1,7 @@
 from mypy.plugin import Plugin, ClassDefContext
 from mypy.plugins.common import add_method_to_class
 
-from mypy.types import AnyType, TypeOfAny, CallableType
+from mypy.types import AnyType, TypeOfAny, CallableType, UnionType
 from mypy.typevars import fill_typevars
 from mypy.nodes import (
     ARG_POS, MDEF, Argument, Var, FuncDef, Block, PassStmt, Decorator,
@@ -49,8 +49,12 @@ def update_dataclass_json_type(ctx: ClassDefContext) -> None:
         return_type=instance_type,
     )
 
-    # TODO: should be Union[str, bytes]
-    arg = Argument(Var('json_data', str_type), str_type, None, ARG_POS)
+    bytes_type = ctx.api.named_type('__builtins__.bytes')
+    json_data_type = UnionType.make_union([str_type, bytes_type])
+
+    arg = Argument(
+        Var('json_data', json_data_type), json_data_type, None, ARG_POS
+    )
     add_classmethod_to_class(
         ctx.api, ctx.cls, 'from_json',
         args=[arg],
