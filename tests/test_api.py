@@ -369,6 +369,20 @@ def test_from_dict__enum():
     assert B.from_dict({'a': 'why'}) == B(A.Y)
 
 
+def test_from_dict__enum_functional_syntax():
+    from enum import Enum
+
+    A = Enum('A', (('X', 'ex'), ('Y', 'why'),))
+
+    @dataclass_json
+    @dataclass
+    class B:
+        a: A
+
+    assert B.from_dict({'a': 'ex'}) == B(A.X)
+    assert B.from_dict({'a': 'why'}) == B(A.Y)
+
+
 def test_to_dict__optional_enum():
     from enum import Enum
 
