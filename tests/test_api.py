@@ -503,6 +503,24 @@ def test_from_dict__date():
     assert A.from_dict({'x': "2021-06-17"}) == A(date(2021, 6, 17))
 
 
+def test_to_dict__datetime():
+    from datetime import datetime, timezone
+
+    @dataclass_json
+    @dataclass
+    class A:
+        x: datetime
+
+    assert A(datetime(2021, 6, 17)).to_dict() == \
+        {'x': "2021-06-17T00:00:00"}
+
+    assert A(datetime(2021, 6, 17, 10, 0, 0,)).to_dict() \
+        == {'x': "2021-06-17T10:00:00"}
+
+    assert A(datetime(2021, 6, 17, 10, 0, 0, tzinfo=timezone.utc)).to_dict() \
+        == {'x': "2021-06-17T10:00:00+00:00"}
+
+
 def test_from_dict__datetime():
     from datetime import datetime, timezone
 
