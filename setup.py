@@ -5,7 +5,7 @@ with open('README.md', 'r', encoding='utf-8') as f:
 
 setup(
     name='fastclasses-json',
-    version='0.1.0-dev',
+    version='0.1.0',
     packages=find_packages(exclude=('tests*',)),
     author='Daniel Golding',
     description='Quickly serialize dataclasses to and from JSON',
@@ -30,6 +30,6 @@ setup(
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
         "Intended Audience :: Developers",
-        "Development Status :: 2 - Pre-Alpha",
+        "Development Status :: 3 - Alpha",
     ],
 )
