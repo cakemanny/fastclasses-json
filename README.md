@@ -39,6 +39,8 @@ Supported Types
 * `typing.Dict[str, T]`
 * `enum.Enum` subclasses
 * `datetime.date` and `datetime.datetime` as ISO8601 format strings
+* `decimal.Decimal` as strings
+* `uuid.UUID` as strings
 * Mutually recursive dataclasses.
 
 any other types will just be left as is
@@ -87,6 +89,20 @@ class Enitnelav:
 
 Enitnelav.from_dict({'romantic': '2021-06-17'})  # Enitnelav(romantic=datetime.date(2021, 6, 17))
 Enitnelav(romantic=date(2021, 6, 17)).to_dict()  # {'romantic': '2021-06-17'}
+
+from decimal import Decimal
+from uuid import UUID
+
+@dataclass_json
+@dataclass
+class TaxReturn:
+    number: UUID
+    to_pay: Decimal  # 😱
+
+TaxReturn.from_dict({'number': 'e10be89e-938f-4b49-b4cf-9765f2f15298', 'to_pay': '0.01'})
+# TaxReturn(number=UUID('e10be89e-938f-4b49-b4cf-9765f2f15298'), to_pay=Decimal('0.01'))
+TaxReturn(UUID('e10be89e-938f-4b49-b4cf-9765f2f15298'), Decimal('0.01')).to_dict()
+# {'number': 'e10be89e-938f-4b49-b4cf-9765f2f15298', 'to_pay': '0.01'}
 
 ```
 

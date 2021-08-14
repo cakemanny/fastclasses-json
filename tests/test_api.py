@@ -538,3 +538,54 @@ def test_from_dict__datetime():
         == A(datetime(2021, 6, 17, 10, 0, 0, tzinfo=timezone.utc))
     assert A.from_dict({'x': "2021-06-17T10:00:00Z"}) \
         == A(datetime(2021, 6, 17, 10, 0, 0, tzinfo=timezone.utc))
+
+
+def test_to_dict__decimal():
+    from decimal import Decimal
+
+    @dataclass_json
+    @dataclass
+    class A:
+        x: Decimal
+
+    assert A(Decimal('9.99')).to_dict() == {'x': "9.99"}
+
+
+def test_from_dict__decimal():
+    from decimal import Decimal
+
+    @dataclass_json
+    @dataclass
+    class A:
+        x: Decimal
+
+    assert A.from_dict({'x': "9.99"}) == A(Decimal('9.99'))
+
+    # Want to not surprise people if non-string is sent
+    # Decimal(1.23) == \
+    # Decimal('1.229999999999999982236431605997495353221893310546875')
+    assert A.from_dict({'x': 1.23}) == A(Decimal('1.23'))
+
+
+def test_to_dict__uuid():
+    from uuid import UUID
+
+    @dataclass_json
+    @dataclass
+    class A:
+        x: UUID
+
+    assert A(UUID('8199d02b-e2fb-4d95-9bdc-d5db0dd0c66d')).to_dict() \
+        == {'x': '8199d02b-e2fb-4d95-9bdc-d5db0dd0c66d'}
+
+
+def test_from_dict__uuid():
+    from uuid import UUID
+
+    @dataclass_json
+    @dataclass
+    class A:
+        x: UUID
+
+    assert A.from_dict({'x': '8199d02b-e2fb-4d95-9bdc-d5db0dd0c66d'}) == \
+        A(UUID('8199d02b-e2fb-4d95-9bdc-d5db0dd0c66d'))

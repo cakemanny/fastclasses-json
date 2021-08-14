@@ -270,11 +270,27 @@ def expr_builder(t: type, depth=0, direction=_FROM):
         else:
             return lambda expr: f'({expr}).isoformat()'
 
+    from decimal import Decimal
+    if issubclass_safe(t, Decimal):
+        if direction == _FROM:
+            return lambda expr: f'{t.__name__}(str({expr}))'
+        else:
+            return lambda expr: f'str({expr})'
+
+    from uuid import UUID
+    if issubclass_safe(t, UUID):
+        if direction == _FROM:
+            return lambda expr: f'{t.__name__}({expr})'
+        else:
+            return lambda expr: f'str({expr})'
+
     return identity
 
 
 def referenced_types(cls):
     from datetime import date, datetime
+    from decimal import Decimal
+    from uuid import UUID
 
     def extract_type(t):
         origin = typing.get_origin(t)
@@ -284,7 +300,9 @@ def referenced_types(cls):
         elif origin == dict:
             value_type_arg = typing.get_args(t)[1]
             return extract_type(value_type_arg)
-        elif is_dataclass(t) or issubclass_safe(t, (Enum, date, datetime)):
+        elif is_dataclass(t) or issubclass_safe(
+            t, (Enum, date, datetime, Decimal, UUID)
+        ):
             return t
         return None
 
