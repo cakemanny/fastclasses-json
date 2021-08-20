@@ -1,5 +1,7 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Optional, List, Dict
+
+import pytest
 
 from fastclasses_json.api import dataclass_json
 
@@ -589,3 +591,68 @@ def test_from_dict__uuid():
 
     assert A.from_dict({'x': '8199d02b-e2fb-4d95-9bdc-d5db0dd0c66d'}) == \
         A(UUID('8199d02b-e2fb-4d95-9bdc-d5db0dd0c66d'))
+
+
+def test_to_dict__customer_encoder():
+
+    @dataclass
+    class Point:
+        x: float
+        y: float
+
+    @dataclass_json
+    @dataclass
+    class A:
+        x: List[Point] = field(metadata={
+            "fastclasses_json": {
+                "encoder": lambda ps: [[p.x, p.y] for p in ps]
+            }
+        })
+
+    # The default to_json would give a list of dictionaries
+    # but maybe we want a mroe compact output, say two-element arrays
+    a = A([
+        Point(0.1, 0.2),
+        Point(0.3, 0.4),
+    ])
+    assert a.to_dict() == {"x": [[0.1, 0.2], [0.3, 0.4]]}
+
+
+def test_to_dict__customer_encoder2():
+    from datetime import date
+
+    @dataclass_json
+    @dataclass
+    class C:
+        x: date = field(metadata={
+            "fastclasses_json": {
+                "encoder": lambda d: d.year * 10000 + d.month * 100 + d.day
+            }
+        })
+
+    assert C(date(1999, 1, 23)).to_dict() == {'x': 19990123}
+
+
+def test_from_dict__customer_decoder():
+
+    @dataclass
+    class Point:
+        x: float
+        y: float
+
+    @dataclass_json
+    @dataclass
+    class A:
+        x: List[Point] = field(metadata={
+            "fastclasses_json": {
+                "decoder": lambda ps: [Point(p[0], p[1]) for p in ps]
+            }
+        })
+
+    # The default to_json would give a list of dictionaries
+    # but maybe we want a mroe compact output, say two-element arrays
+    a = A([
+        Point(0.1, 0.2),
+        Point(0.3, 0.4),
+    ])
+    assert A.from_dict({"x": [[0.1, 0.2], [0.3, 0.4]]}) == a

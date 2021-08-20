@@ -1,4 +1,4 @@
-from dataclasses import is_dataclass
+from dataclasses import is_dataclass, fields as dataclass_fields
 from enum import Enum
 import sys
 import types
@@ -76,8 +76,10 @@ def _replace_from_dict(cls, from_dict='from_dict'):
     the_globals = {
         # use the defining modules globals
         **sys.modules[cls.__module__].__dict__,
+        # along with any decoders
+        **decoders(cls),
         # along with types we use for the conversion
-        **referenced_types(cls)
+        **referenced_types(cls),
     }
 
     from_dict_func = types.FunctionType(
@@ -100,9 +102,16 @@ def _replace_to_dict(cls, to_dict='to_dict'):
         if isinstance(const, types.CodeType)
     ][0]
 
+    the_globals = {
+        # use the defining modules globals
+        **sys.modules[cls.__module__].__dict__,
+        # along with any encoders
+        **encoders(cls),
+    }
+
     to_dict_func = types.FunctionType(
         to_dict_code,
-        sys.modules[cls.__module__].__dict__,
+        the_globals,
         to_dict,
     )
 
@@ -115,6 +124,9 @@ def _from_dict_source(cls):
         'def from_dict(cls, o):',
         '    args = []',
     ]
+
+    fields_by_name = {f.name: f for f in dataclass_fields(cls)}
+
     for name, field_type in typing.get_type_hints(cls).items():
 
         # pop off the top layer of optional, since we are using o.get
@@ -124,6 +136,8 @@ def _from_dict_source(cls):
         access = f'o.get({name!r})'
 
         transform = expr_builder_from(field_type)
+        if has_meta(fields_by_name[name], 'decoder'):
+            transform = decoder_expr(name)
 
         if transform('x') != 'x':
             lines.append(f'    value = {access}')
@@ -147,11 +161,16 @@ def _to_dict_source(cls):
     # TODO: option for including Nones or not
     INCLUDE_NONES = False
 
+    fields_by_name = {f.name: f for f in dataclass_fields(cls)}
+
     for name, field_type in typing.get_type_hints(cls).items():
 
         access = f'self.{name}'
 
         transform = expr_builder_to(field_type)
+
+        if has_meta(fields_by_name[name], 'encoder'):
+            transform = encoder_expr(name)
 
         if transform('x') != 'x':
             # since we have an is not none check, elide the first level
@@ -171,6 +190,40 @@ def _to_dict_source(cls):
     lines.append('    return result')
     lines.append('')
     return '\n'.join(lines)
+
+
+def encoders(cls):
+    result = {}
+    for field in dataclass_fields(cls):
+        if has_meta(field, 'encoder'):
+            sym = f'{field.name}#encoder'
+            result[sym] = field.metadata['fastclasses_json']['encoder']
+    return result
+
+
+def decoders(cls):
+    result = {}
+    for field in dataclass_fields(cls):
+        if has_meta(field, 'decoder'):
+            sym = f'{field.name}#decoder'
+            result[sym] = field.metadata['fastclasses_json']['decoder']
+    return result
+
+
+def has_meta(field, meta):
+    if field.metadata and field.metadata.get('fastclasses_json', {}).get(meta):
+        return True
+    return False
+
+
+def encoder_expr(name):
+    # this funny x#encoder will have been placed in globals
+    return lambda expr: f'globals()["{name}#encoder"]({expr})'
+
+
+def decoder_expr(name):
+    # this funny x#decoder will have been placed in globals
+    return lambda expr: f'globals()["{name}#decoder"]({expr})'
 
 
 def expr_builder_from(t: type, depth=0):

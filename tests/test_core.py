@@ -9,6 +9,7 @@ from fastclasses_json import core
 
 def test_to_dict_source():
 
+    @dataclass
     class A:
         x: int
 
@@ -24,6 +25,7 @@ def test_to_dict_source():
 
 def test_from_dict_source():
 
+    @dataclass
     class A:
         x: int
 
@@ -39,6 +41,7 @@ def test_from_dict_source():
 
 def test_from_dict_source__optional():
 
+    @dataclass
     class A:
         x: Optional[int]
 
