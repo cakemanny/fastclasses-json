@@ -708,23 +708,3 @@ def test__custom_field_name__errors():
 
     with pytest.raises(TypeError):
         a.from_dict({99: 1})
-
-
-@dataclass_json
-@dataclass
-class Coach:
-    from_: str = field(metadata={
-        "fastclasses_json": {
-            "field_name": "from",
-            "encoder": lambda v: v[:5].upper(),
-        }
-    })
-    to_: str = field(metadata={
-        "fastclasses_json": {
-            "field_name": "to",
-            "encoder": lambda v: v[:5].upper(),
-        }
-    })
-
-
-print(Coach("London Victoria", "Amsterdam Sloterdijk").to_dict())
