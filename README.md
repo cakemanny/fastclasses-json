@@ -109,6 +109,42 @@ TaxReturn(UUID('e10be89e-938f-4b49-b4cf-9765f2f15298'), Decimal('0.01')).to_dict
 we are not a drop-in replacement for Dataclasses JSON. There are plenty of
 cases to use this in spite.
 
+Configuration
+-------------
+
+Per-field configuration is done by including a `"fastclasses_json"` dict
+in the field metadata dict.
+
+* `encoder`: a function to convert a given field value when converting from
+  a `dataclass` to a `dict` or to JSON. Can be any callable.
+* `decoder`: a function to convert a given field value when converting from
+  JSON or a dict into the python `dataclass`. Can be any callable.
+* `field_name`: the name the field should be called in the JSON output.
+
+### example
+
+```python
+@dataclass_json
+@dataclass
+class Coach:
+    from_: str = field(metadata={
+        "fastclasses_json": {
+            "field_name": "from",
+            "encoder": lambda v: v[:5].upper(),
+        }
+    })
+    to_: str = field(metadata={
+        "fastclasses_json": {
+            "field_name": "to",
+            "encoder": lambda v: v[:5].upper(),
+        }
+    })
+
+
+Coach("London Victoria", "Amsterdam Sloterdijk").to_dict()
+# {'from': 'LONDO', 'to': 'AMSTE'}
+```
+
 
 Type checking (i.e. using mypy)
 -------------------------------

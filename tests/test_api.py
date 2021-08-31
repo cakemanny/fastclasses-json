@@ -593,7 +593,7 @@ def test_from_dict__uuid():
         A(UUID('8199d02b-e2fb-4d95-9bdc-d5db0dd0c66d'))
 
 
-def test_to_dict__customer_encoder():
+def test_to_dict__custom_encoder():
 
     @dataclass
     class Point:
@@ -618,7 +618,7 @@ def test_to_dict__customer_encoder():
     assert a.to_dict() == {"x": [[0.1, 0.2], [0.3, 0.4]]}
 
 
-def test_to_dict__customer_encoder2():
+def test_to_dict__custom_encoder2():
     from datetime import date
 
     @dataclass_json
@@ -633,7 +633,7 @@ def test_to_dict__customer_encoder2():
     assert C(date(1999, 1, 23)).to_dict() == {'x': 19990123}
 
 
-def test_from_dict__customer_decoder():
+def test_from_dict__custom_decoder():
 
     @dataclass
     class Point:
@@ -656,3 +656,75 @@ def test_from_dict__customer_decoder():
         Point(0.3, 0.4),
     ])
     assert A.from_dict({"x": [[0.1, 0.2], [0.3, 0.4]]}) == a
+
+
+def test__custom_field_name():
+
+    @dataclass
+    class Coach:
+        from_: str = field(metadata={
+            "fastclasses_json": {"field_name": "from"}
+        })
+        to_: str = field(metadata={
+            "fastclasses_json": {"field_name": "to"}
+        })
+
+    @dataclass_json
+    @dataclass
+    class Itinerary:
+        journeys: List[Coach]
+
+    a = Itinerary([
+        Coach("Land's End", "John O' Groats"),
+        Coach("London Victoria", "Amsterdam Sloterdijk"),
+    ])
+
+    expected_dict = {"journeys": [
+        {"from": "Land's End", "to": "John O' Groats"},
+        {"from": "London Victoria", "to": "Amsterdam Sloterdijk"},
+    ]}
+
+    assert a.to_dict() == expected_dict
+
+    assert Itinerary.from_dict(expected_dict) == a
+
+
+def test__custom_field_name__errors():
+
+    @dataclass_json
+    @dataclass
+    class A:
+        x: int = field(metadata={
+            "fastclasses_json": {"field_name": 99}
+        })
+
+    a = A(1)
+
+    # These would actually work ok. but the to_json and from_json start
+    # getting weird and its probably not what people expect...
+
+    with pytest.raises(TypeError):
+        a.to_dict()
+
+    with pytest.raises(TypeError):
+        a.from_dict({99: 1})
+
+
+@dataclass_json
+@dataclass
+class Coach:
+    from_: str = field(metadata={
+        "fastclasses_json": {
+            "field_name": "from",
+            "encoder": lambda v: v[:5].upper(),
+        }
+    })
+    to_: str = field(metadata={
+        "fastclasses_json": {
+            "field_name": "to",
+            "encoder": lambda v: v[:5].upper(),
+        }
+    })
+
+
+print(Coach("London Victoria", "Amsterdam Sloterdijk").to_dict())

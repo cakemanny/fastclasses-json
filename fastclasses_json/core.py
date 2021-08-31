@@ -133,10 +133,21 @@ def _from_dict_source(cls):
         if typing.get_origin(field_type) == typing.Union:
             field_type = typing.get_args(field_type)[0]
 
-        access = f'o.get({name!r})'
+        field = fields_by_name[name]
+
+        input_name = name
+        if has_meta(field, 'field_name'):
+            input_name = field.metadata['fastclasses_json']['field_name']
+            if not isinstance(input_name, str):
+                raise TypeError(
+                    "fastclasses_json, field_name must be str: "
+                    f"{cls.__name__}.{name}"
+                )
+
+        access = f'o.get({input_name!r})'
 
         transform = expr_builder_from(field_type)
-        if has_meta(fields_by_name[name], 'decoder'):
+        if has_meta(field, 'decoder'):
             transform = decoder_expr(name)
 
         if transform('x') != 'x':
@@ -169,8 +180,20 @@ def _to_dict_source(cls):
 
         transform = expr_builder_to(field_type)
 
-        if has_meta(fields_by_name[name], 'encoder'):
+        # custom encoder and decoder routines
+        field = fields_by_name[name]
+        if has_meta(field, 'encoder'):
             transform = encoder_expr(name)
+
+        # custom mapping of dataclass fieldnames to json field names
+        output_name = name
+        if has_meta(field, 'field_name'):
+            output_name = field.metadata['fastclasses_json']['field_name']
+            if not isinstance(output_name, str):
+                raise TypeError(
+                    "fastclasses_json, field_name must be str: "
+                    f"{cls.__name__}.{name}"
+                )
 
         if transform('x') != 'x':
             # since we have an is not none check, elide the first level
@@ -181,11 +204,11 @@ def _to_dict_source(cls):
             lines.append(f'    if value is not None:')  # noqa: F541
             lines.append(f'        value = ' + transform('value'))  # noqa: E501,F541
             if INCLUDE_NONES:
-                lines.append(f'    result[{name!r}] = value')
+                lines.append(f'    result[{output_name!r}] = value')
             else:
-                lines.append(f'        result[{name!r}] = value')
+                lines.append(f'        result[{output_name!r}] = value')
         else:
-            lines.append(f'    result[{name!r}] = {access}')
+            lines.append(f'    result[{output_name!r}] = {access}')
 
     lines.append('    return result')
     lines.append('')
