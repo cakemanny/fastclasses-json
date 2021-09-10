@@ -708,3 +708,17 @@ def test__custom_field_name__errors():
 
     with pytest.raises(TypeError):
         a.from_dict({99: 1})
+
+
+def test__missing_type_params():
+
+    @dataclass_json
+    @dataclass
+    class B:
+        a: List
+        b: Dict
+
+    assert B(['x', 'y'], {}).to_dict() == {'a': ['x', 'y'], 'b': {}}
+    assert B.from_dict({'a': ['x', 'y'], 'b': {}}) == B(['x', 'y'], {})
+
+

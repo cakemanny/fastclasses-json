@@ -272,7 +272,7 @@ def expr_builder(t: type, depth=0, direction=_FROM):
             return f'{inner(t0)} if ({t0}:=({expr})) is not None else None'
 
         return f
-    elif origin == list:
+    elif origin == list and typing.get_args(t):
         type_arg = typing.get_args(t)[0]
         inner = expr_builder(type_arg, depth + 1, direction)
 
@@ -280,7 +280,7 @@ def expr_builder(t: type, depth=0, direction=_FROM):
             t0 = f'__{depth}'
             return f'[{inner(t0)} for {t0} in {expr}]'
         return f
-    elif origin == dict:
+    elif origin == dict and typing.get_args(t):
         key_type, value_type = typing.get_args(t)
 
         if not issubclass_safe(key_type, str):
@@ -370,10 +370,10 @@ def referenced_types(cls):
 
     def extract_type(t):
         origin = typing.get_origin(t)
-        if origin == typing.Union or origin == list:
+        if (origin == typing.Union or origin == list) and typing.get_args(t):
             type_arg = typing.get_args(t)[0]
             return extract_type(type_arg)
-        elif origin == dict:
+        elif origin == dict and typing.get_args(t):
             value_type_arg = typing.get_args(t)[1]
             return extract_type(value_type_arg)
         elif is_dataclass(t) or issubclass_safe(
