@@ -58,22 +58,33 @@ def update_dataclass_json_type(ctx: ClassDefContext) -> None:
     )
 
     instance_type = fill_typevars(ctx.cls.info)
-    arg = Argument(Var('o', json_dict_type), json_dict_type, None, ARG_POS)
+    bool_type = ctx.api.named_type('__builtins__.bool')
+    args = [
+        Argument(Var('o', json_dict_type), json_dict_type, None, ARG_POS),
+        Argument(
+            Var('infer_missing', bool_type), bool_type, None, ARG_NAMED_OPT
+        ),
+    ]
     add_classmethod_to_class(
         ctx.api, ctx.cls, 'from_dict',
-        args=[arg],
+        args=args,
         return_type=instance_type,
     )
 
     bytes_type = ctx.api.named_type('__builtins__.bytes')
     json_data_type = UnionType.make_union([str_type, bytes_type])
 
-    arg = Argument(
-        Var('json_data', json_data_type), json_data_type, None, ARG_POS
-    )
+    args = [
+        Argument(
+            Var('json_data', json_data_type), json_data_type, None, ARG_POS
+        ),
+        Argument(
+            Var('infer_missing', bool_type), bool_type, None, ARG_NAMED_OPT
+        ),
+    ]
     add_classmethod_to_class(
         ctx.api, ctx.cls, 'from_json',
-        args=[arg],
+        args=args,
         return_type=instance_type,
     )
 

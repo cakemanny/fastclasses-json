@@ -36,8 +36,10 @@ def _process_class(cls):
     cls.from_dict = classmethod(from_dict)
     cls.to_dict = to_dict
 
-    def from_json(cls, json_data):
-        return cls.from_dict(json.loads(json_data))
+    def from_json(cls, json_data, infer_missing=True):
+        return cls.from_dict(
+            json.loads(json_data), infer_missing=infer_missing
+        )
 
     def to_json(self, *, separators=None, indent=None):
         if indent is None and separators is None:
@@ -94,6 +96,7 @@ def _replace_from_dict(cls, from_dict='from_dict'):
         the_globals,
         from_dict,
     )
+    from_dict_func.__kwdefaults__ = {'infer_missing': True}
 
     setattr(cls, from_dict, classmethod(from_dict_func))
 
@@ -128,7 +131,7 @@ def _replace_to_dict(cls, to_dict='to_dict'):
 def _from_dict_source(cls):
 
     lines = [
-        'def from_dict(cls, o):',
+        'def from_dict(cls, o, *, infer_missing):',
         '    args = []',
     ]
 
