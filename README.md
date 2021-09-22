@@ -39,6 +39,8 @@ Supported Types
 * `typing.Dict[str, T]`
 * `enum.Enum` subclasses
 * `datetime.date` and `datetime.datetime` as ISO8601 format strings
+  - NB: if `python-dateutil` is installed, it will be used instead of the
+    standard library for parsing
 * `decimal.Decimal` as strings
 * `uuid.UUID` as strings
 * Mutually recursive dataclasses.

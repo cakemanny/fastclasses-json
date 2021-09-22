@@ -522,6 +522,10 @@ def test_to_dict__datetime():
     assert A(datetime(2021, 6, 17, 10, 0, 0, tzinfo=timezone.utc)).to_dict() \
         == {'x': "2021-06-17T10:00:00+00:00"}
 
+    assert A(datetime(2021, 9, 22, 7, 54, 13, 370000,
+                      tzinfo=timezone.utc)).to_dict() \
+        == {'x': "2021-09-22T07:54:13.370000+00:00"}
+
 
 def test_from_dict__datetime():
     from datetime import datetime, timezone
@@ -540,6 +544,19 @@ def test_from_dict__datetime():
         == A(datetime(2021, 6, 17, 10, 0, 0, tzinfo=timezone.utc))
     assert A.from_dict({'x': "2021-06-17T10:00:00Z"}) \
         == A(datetime(2021, 6, 17, 10, 0, 0, tzinfo=timezone.utc))
+
+
+@pytest.mark.dateutil
+def test_datetimes_not_supported_by_standard_library():
+    from datetime import datetime, timezone
+
+    @dataclass_json
+    @dataclass
+    class A:
+        x: datetime
+
+    assert A.from_dict({'x': "2021-09-22T07:54:13.37Z"}) \
+        == A(datetime(2021, 9, 22, 7, 54, 13, 370000, tzinfo=timezone.utc))
 
 
 def test_to_dict__decimal():

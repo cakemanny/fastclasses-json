@@ -4,8 +4,15 @@ import sys
 import types
 import typing
 import warnings
-
 from .utils import issubclass_safe
+
+try:
+    import dateutil.parser
+    assert dateutil.parser
+    HAS_DATEUTIL = True
+except Exception:
+    HAS_DATEUTIL = False
+
 
 _FROM = 1
 _TO = 2
@@ -124,6 +131,9 @@ def _from_dict_source(cls):
         'def from_dict(cls, o):',
         '    args = []',
     ]
+
+    if HAS_DATEUTIL:
+        lines.insert(1, '    import dateutil.parser')
 
     fields_by_name = {f.name: f for f in dataclass_fields(cls)}
 
@@ -332,10 +342,14 @@ def expr_builder(t: type, depth=0, direction=_FROM):
         if direction == _FROM:
             def f(expr):
                 t0 = f'__{depth}'
-                return (f'{t.__name__}.fromisoformat('
-                        f'{t0}[:-1]+"+00:00" if ({t0}:={expr})[-1]=="Z" '
-                        f'else {t0}'
-                        ')')
+                if HAS_DATEUTIL:
+                    # doesn't work for subclasses... but
+                    return f'dateutil.parser.isoparse({expr})'
+                else:
+                    return (f'{t.__name__}.fromisoformat('
+                            f'{t0}[:-1]+"+00:00" if ({t0}:={expr})[-1]=="Z" '
+                            f'else {t0}'
+                            ')')
             return f
         else:
             return lambda expr: f'({expr}).isoformat()'
