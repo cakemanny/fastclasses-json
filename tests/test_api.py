@@ -720,5 +720,3 @@ def test__missing_type_params():
 
     assert B(['x', 'y'], {}).to_dict() == {'a': ['x', 'y'], 'b': {}}
     assert B.from_dict({'a': ['x', 'y'], 'b': {}}) == B(['x', 'y'], {})
-
-
