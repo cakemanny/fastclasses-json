@@ -29,6 +29,12 @@ SimpleExample('hi!').to_json()
 
 ```
 
+Installation
+------------
+```bash
+$ pip install fastclasses-json
+```
+
 Supported Types
 ---------------
 * `typing.List[T]` where `T` is also decorated with `@dataclass_json`
