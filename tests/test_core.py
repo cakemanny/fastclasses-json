@@ -31,7 +31,7 @@ def test_from_dict_source():
 
     assert core._from_dict_source(A) == textwrap.dedent(
         """\
-        def from_dict(cls, o):
+        def from_dict(cls, o, *, infer_missing):
             args = []
             args.append(o.get('x'))
             return cls(*args)
@@ -47,7 +47,7 @@ def test_from_dict_source__optional():
 
     assert core._from_dict_source(A) == textwrap.dedent(
         """\
-        def from_dict(cls, o):
+        def from_dict(cls, o, *, infer_missing):
             args = []
             args.append(o.get('x'))
             return cls(*args)
@@ -69,7 +69,7 @@ def test_from_dict_source__list_nested():
 
     assert core._from_dict_source(B) == textwrap.dedent(
         """\
-        def from_dict(cls, o):
+        def from_dict(cls, o, *, infer_missing):
             args = []
             value = o.get('a')
             if value is not None:
@@ -94,7 +94,7 @@ def test_from_dict_source__enum():
 
     assert core._from_dict_source(B) == textwrap.dedent(
         """\
-        def from_dict(cls, o):
+        def from_dict(cls, o, *, infer_missing):
             args = []
             value = o.get('a')
             if value is not None:
