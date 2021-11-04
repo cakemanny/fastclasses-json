@@ -205,3 +205,39 @@ Success: no issues found in 1 source file
 
 Notice that you have to use both the `@dataclass_json` decorator and the
 `JSONMixin` mixin. How very annoying!
+
+
+Migration & Caveats
+-------------------
+
+### `infer_missing`
+Fastclasses JSON does not get annoyed if fields are missing when deserializing.
+Missing fields are initialized as `None`. This differs from the defaults in
+[Dataclasses JSON][dataclasses-json].
+
+```python
+from dataclasses import dataclass
+from fastclasses_json import dataclass_json, JSONMixin
+
+@dataclass_json
+@dataclass
+class Cupboard:
+    num_hats: int
+    num_coats: int
+
+Cupboard.from_dict({'num_hats': 2})
+# Cupboard(num_hats=2, num_coats=None)
+```
+
+In [Dataclasses JSON][dataclasses-json], there is the `infer_missing`
+parameter that gives this behaviour.
+To make migration easier, `from_dict` and `from_json` takes the dummy parameter
+`infer_missing`, so that the following code works the same and does
+not cause errors:
+
+```python
+Cupboard.from_dict({'num_hats': 2}, infer_missing=True)
+# Cupboard(num_hats=2, num_coats=None)
+```
+
+[dataclasses-json]: https://github.com/lidatong/dataclasses-json/
