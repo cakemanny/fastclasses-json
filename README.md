@@ -210,6 +210,26 @@ Notice that you have to use both the `@dataclass_json` decorator and the
 Migration & Caveats
 -------------------
 
+### `None`
+Fields with the value `None` are not included in the produced JSON. This helps
+keep the JSON nice and compact
+
+```python
+from dataclasses import dataclass
+from fastclasses_json import dataclass_json
+from typing import Optional
+
+@dataclass_json
+@dataclass
+class Farm:
+    sheep: Optional[int]
+    cows: Optional[int]
+
+Farm(sheep=None, cows=1).to_json()
+# '{"cows":1}'
+```
+
+
 ### `infer_missing`
 Fastclasses JSON does not get annoyed if fields are missing when deserializing.
 Missing fields are initialized as `None`. This differs from the defaults in
@@ -217,7 +237,7 @@ Missing fields are initialized as `None`. This differs from the defaults in
 
 ```python
 from dataclasses import dataclass
-from fastclasses_json import dataclass_json, JSONMixin
+from fastclasses_json import dataclass_json
 
 @dataclass_json
 @dataclass
@@ -241,3 +261,5 @@ Cupboard.from_dict({'num_hats': 2}, infer_missing=True)
 ```
 
 [dataclasses-json]: https://github.com/lidatong/dataclasses-json/
+
+<!-- TODO: write about nested Any? -->
