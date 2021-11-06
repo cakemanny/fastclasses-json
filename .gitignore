@@ -1,6 +1,7 @@
 # compiled python files
 *.pyc
 __pycache__/
+build/
 
 *.egg-info
 .pytest_cache

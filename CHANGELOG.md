@@ -6,6 +6,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.3] - 2021-11-06
+## Fixed
+- The mypy plugin not working in external projects due to mypy refusing
+  to analyse the module.
+
 ## [0.2.2] - 2021-11-04
 ### Added
 - Dummy `infer_missing` parameter to `from_dict` to make migration from
@@ -29,7 +34,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - This CHANGELOG file
 - Support for Decimals and UUIDs
 
-[Unreleased]: https://github.com/cakemanny/fastclasses-json/compare/v0.2.2...HEAD
+[Unreleased]: https://github.com/cakemanny/fastclasses-json/compare/v0.2.3...HEAD
+[0.2.3]: https://github.com/cakemanny/fastclasses-json/compare/v0.2.2...v0.2.3
 [0.2.2]: https://github.com/cakemanny/fastclasses-json/compare/v0.2.1...v0.2.2
 [0.2.1]: https://github.com/cakemanny/fastclasses-json/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/cakemanny/fastclasses-json/compare/v0.1.0...v0.2.0
