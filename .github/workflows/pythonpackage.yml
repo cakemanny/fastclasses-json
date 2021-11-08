@@ -31,7 +31,7 @@ jobs:
     - name: Test with pytest
       run: |
         pip install pytest
-        pytest -m "not dateutil"
+        pytest
     - name: Test mypy module
       run: |
         pip install mypy types-python-dateutil

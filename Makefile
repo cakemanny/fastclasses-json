@@ -7,7 +7,7 @@ venv: requirements.txt requirements-test.txt
 	touch venv
 
 test: venv
-	venv/bin/pytest -m "not dateutil"
+	venv/bin/pytest
 
 lint: venv
 	venv/bin/flake8 fastclasses_json

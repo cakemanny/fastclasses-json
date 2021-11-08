@@ -546,8 +546,8 @@ def test_from_dict__datetime():
         == A(datetime(2021, 6, 17, 10, 0, 0, tzinfo=timezone.utc))
 
 
-@pytest.mark.dateutil
 def test_datetimes_not_supported_by_standard_library():
+    pytest.importorskip("dateutil")
     from datetime import datetime, timezone
 
     @dataclass_json
@@ -627,7 +627,7 @@ def test_to_dict__custom_encoder():
         })
 
     # The default to_json would give a list of dictionaries
-    # but maybe we want a mroe compact output, say two-element arrays
+    # but maybe we want a more compact output, say two-element arrays
     a = A([
         Point(0.1, 0.2),
         Point(0.3, 0.4),
