@@ -278,6 +278,28 @@ def test_from_dict__optional_list_nested_with_defaults():
     }) == B([A('xxx'), A('yyy')])
 
 
+def test_from_dict__default():
+
+    @dataclass_json
+    @dataclass
+    class Account:
+        # Balance must contain at least one € to begin with
+        bank_balance: int = 1
+
+    assert Account.from_dict({}) == Account(bank_balance=1)
+
+
+def test_from_dict__default_factory():
+
+    @dataclass_json
+    @dataclass
+    class A:
+        # Balance must contain at least one € to begin with
+        xs: List[int] = field(default_factory=list)
+
+    assert A.from_dict({}) == A(xs=[])
+
+
 # These have to be defined at the module level since that's where string type
 # hints are evaluated, they are for the string_type_name
 

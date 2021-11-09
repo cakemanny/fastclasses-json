@@ -1,4 +1,4 @@
-from dataclasses import is_dataclass, fields as dataclass_fields
+from dataclasses import is_dataclass, fields as dataclass_fields, MISSING
 from enum import Enum
 import sys
 import types
@@ -132,7 +132,7 @@ def _from_dict_source(cls):
 
     lines = [
         'def from_dict(cls, o, *, infer_missing):',
-        '    args = []',
+        '    args = {}',
     ]
 
     if HAS_DATEUTIL:
@@ -157,6 +157,13 @@ def _from_dict_source(cls):
                     f"{cls.__name__}.{name}"
                 )
 
+        has_default = (
+            field.default is not MISSING
+            or field.default_factory is not MISSING
+        )
+        use_defaults = True  # TODO: get this from a config option
+        use_default = has_default and use_defaults
+
         access = f'o.get({input_name!r})'
 
         transform = expr_builder_from(field_type)
@@ -167,10 +174,20 @@ def _from_dict_source(cls):
             lines.append(f'    value = {access}')
             lines.append(f'    if value is not None:')  # noqa: F541
             lines.append(f'        value = ' + transform('value'))  # noqa: E501,F541
-            lines.append(f'    args.append(value)')  # noqa: F541
+            if use_default:
+                # has a default, so no need to put in args
+                lines.append(f'    if {input_name!r} in o:')
+                lines.append(f'        args[{name!r}] = value')
+            else:
+                lines.append(f'    args[{name!r}] = value')
         else:
-            lines.append(f'    args.append({access})')
-    lines.append('    return cls(*args)')
+            if use_default:
+                # has a default, so no need to put in args
+                lines.append(f'    if {input_name!r} in o:')
+                lines.append(f'        args[{name!r}] = {access}')
+            else:
+                lines.append(f'    args[{name!r}] = {access}')
+    lines.append('    return cls(**args)')
     lines.append('')
     return '\n'.join(lines)
 
@@ -312,7 +329,7 @@ def expr_builder(t: type, depth=0, direction=_FROM):
             )
         return f
     elif is_dataclass(t):
-        # Give indirectly referenced dataclassses a to_dict method without
+        # Give indirectly referenced dataclasses a to_dict method without
         # trashing their public API
         if not hasattr(t, '_fastclasses_json_from_dict'):
             _process_class_internal(t)
