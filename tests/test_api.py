@@ -759,3 +759,22 @@ def test__missing_type_params():
 
     assert B(['x', 'y'], {}).to_dict() == {'a': ['x', 'y'], 'b': {}}
     assert B.from_dict({'a': ['x', 'y'], 'b': {}}) == B(['x', 'y'], {})
+
+
+@pytest.mark.xfail(reason="Not sure of the use cases")
+def test_from_dict__non_init_params():
+
+    @dataclass_json
+    @dataclass
+    class A:
+        a: str
+        b: str = field(init=False)
+
+    a = A.from_dict({'a': 'here', 'b': 'here'})
+    assert a.a == 'here'
+
+    #
+    assert hasattr(a, 'b') is False
+    assert a.b == 'here'
+    # Should the b be included or not
+    a.to_dict()
