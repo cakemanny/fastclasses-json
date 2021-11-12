@@ -228,7 +228,9 @@ def _to_dict_source(cls):
         if transform('x') != 'x':
             # since we have an is not none check, elide the first level
             # of optional
-            if typing.get_origin(field_type) == typing.Union:
+            if (typing.get_origin(field_type) == typing.Union
+                    # This is a bit yuk. Premature optimization 🙄
+                    and transform('x') == expr_builder_to(field_type)('x')):
                 transform = expr_builder_to(typing.get_args(field_type)[0])
             lines.append(f'    value = {access}')
             lines.append(f'    if value is not None:')  # noqa: F541

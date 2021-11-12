@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from typing import Optional, List, Dict
+from typing import Optional, List, Dict, Union
 
 import pytest
 
@@ -670,6 +670,27 @@ def test_to_dict__custom_encoder2():
         })
 
     assert C(date(1999, 1, 23)).to_dict() == {'x': 19990123}
+
+
+def test_to_dict__custom_encoder_with_union():
+
+    def encoder(x: Union[str, int]):
+        if isinstance(x, int):
+            return hex(x)
+        assert isinstance(x, str)
+        return x
+
+    @dataclass_json
+    @dataclass
+    class C:
+        x: Union[str, int] = field(metadata={
+            "fastclasses_json": {
+                "encoder": encoder
+            }
+        })
+
+    assert C(51966).to_dict() == {'x': '0xcafe'}
+    assert C("0xbabe").to_dict() == {'x': '0xbabe'}
 
 
 def test_from_dict__custom_decoder():

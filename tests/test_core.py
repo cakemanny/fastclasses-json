@@ -7,6 +7,10 @@ from fastclasses_json.api import dataclass_json
 from fastclasses_json import core
 
 
+# These tests are only keeping an eye on the innards. It's fine for them
+# to break and need to be rewritten or deleted.
+
+
 def test_to_dict_source():
 
     @dataclass
@@ -18,6 +22,26 @@ def test_to_dict_source():
         def to_dict(self):
             result = {}
             result['x'] = self.x
+            return result
+        """
+    )
+
+
+def test_to_dict_source__optional():
+
+    @dataclass
+    class A:
+        x: Optional[int]
+
+    # The `value = value` line aint great but oh well
+    assert core._to_dict_source(A) == textwrap.dedent(
+        """\
+        def to_dict(self):
+            result = {}
+            value = self.x
+            if value is not None:
+                value = value
+                result['x'] = value
             return result
         """
     )
