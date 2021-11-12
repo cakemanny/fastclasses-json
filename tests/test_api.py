@@ -718,6 +718,26 @@ def test_from_dict__custom_decoder():
     assert A.from_dict({"x": [[0.1, 0.2], [0.3, 0.4]]}) == a
 
 
+def test_from_dict__custom_decoder_with_union():
+
+    def decoder(x: int) -> Union[int, str]:
+        if x < 0:
+            return "OVERDRAWN!!"
+        return x
+
+    @dataclass_json
+    @dataclass
+    class C:
+        x: Union[int, str] = field(metadata={
+            "fastclasses_json": {
+                "decoder": decoder
+            }
+        })
+
+    assert C.from_dict({'x': 99}) == C(99)
+    assert C.from_dict({'x': -99}) == C("OVERDRAWN!!")
+
+
 def test__custom_field_name():
 
     @dataclass
