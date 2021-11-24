@@ -8,7 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.3.1] - 2021-11-12
 ### Fixed
-- Custom encoder not being used on Union typed fields (#5)
+- Custom encoder not being used on Union typed fields (#5). Thanks @Borealin
+  for reporting.
 
 ## [0.3.0] - 2021-11-09
 ### Added
