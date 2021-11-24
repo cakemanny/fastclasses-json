@@ -8,8 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.3.1] - 2021-11-12
 ### Fixed
-- Custom encoder not being used on Union typed fields (#5). Thanks @Borealin
-  for reporting.
+- Custom encoder not being used on Union typed fields ([#5][#5]).
+  Thanks [@Borealin][user-Borealin] for reporting.
 
 ## [0.3.0] - 2021-11-09
 ### Added
@@ -51,3 +51,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [0.2.1]: https://github.com/cakemanny/fastclasses-json/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/cakemanny/fastclasses-json/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/cakemanny/fastclasses-json/releases/tag/v0.1.0
+[user-Borealin]: https://github.com/Borealin
+[#5]: https://github.com/cakemanny/fastclasses-json/issues/5
