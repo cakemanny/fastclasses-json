@@ -5,15 +5,19 @@ from .core import _process_class
 
 class JSONMixin:
 
-    def to_dict(self) -> dict: ...
+    def to_dict(self) -> dict:
+        raise NotImplementedError
 
     @classmethod
-    def from_dict(cls, o: dict, *, infer_missing=True): ...
+    def from_dict(cls, o: dict, *, infer_missing=True):
+        raise NotImplementedError
 
-    def to_json(self, *, separators=None, indent=None) -> str: ...
+    def to_json(self, *, separators=None, indent=None) -> str:
+        raise NotImplementedError
 
-    def from_json(cls, json_data: Union[str, bytes],
-                  *, infer_missing=True): ...
+    @classmethod
+    def from_json(cls, json_data: Union[str, bytes], *, infer_missing=True):
+        raise NotImplementedError
 
 
 def dataclass_json(cls=None):

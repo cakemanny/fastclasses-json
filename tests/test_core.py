@@ -98,12 +98,10 @@ def test_from_dict_source__default():
 
 def test_from_dict_source__list_nested():
 
-    @dataclass_json
     @dataclass
     class A:
         a: str
 
-    @dataclass_json
     @dataclass
     class B:
         a: List[A]

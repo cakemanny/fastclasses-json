@@ -21,6 +21,9 @@ _TO = 2
 def _process_class(cls):
     import json
 
+    if not is_dataclass(cls):
+        raise TypeError("must be called with a dataclass type")
+
     _process_class_internal(cls)
 
     def from_dict(cls, *args, **kwargs):
@@ -293,6 +296,8 @@ def expr_builder(t: type, depth=0, direction=_FROM):
     def identity(expr):
         return expr
 
+    # Container types
+
     origin = typing.get_origin(t)
 
     if origin == typing.Union:
@@ -330,14 +335,31 @@ def expr_builder(t: type, depth=0, direction=_FROM):
                 + '}'
             )
         return f
-    elif is_dataclass(t):
+
+    # Pleb types
+
+    if False:
+        # Call to_dict method whenever it exists?
+        # Probably not. It could be surprising.
+        import inspect
+        if direction == _FROM:
+            if hasattr(t, 'from_dict') and inspect.ismethod(t.from_dict):
+                return lambda expr: f'{t.__name__}.from_dict({expr})'
+        else:
+            if hasattr(t, 'to_dict') and inspect.isfunction(t.to_dict):
+                return lambda expr: f'({expr}).to_dict()'
+
+    from fastclasses_json.api import JSONMixin
+    if issubclass_safe(t, JSONMixin):
+        if direction == _FROM:
+            return lambda expr: f'{t.__name__}.from_dict({expr})'
+        else:
+            return lambda expr: f'({expr}).to_dict()'
+    if is_dataclass(t):
         # Give indirectly referenced dataclasses a to_dict method without
         # trashing their public API
         if not hasattr(t, '_fastclasses_json_from_dict'):
             _process_class_internal(t)
-
-        # TODO: consider calling to_dict, from_dict if they are there
-        # i.e. create a way for serialization to be overridden
 
         if direction == _FROM:
             def f(expr):

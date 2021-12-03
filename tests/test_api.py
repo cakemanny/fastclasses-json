@@ -3,7 +3,7 @@ from typing import Optional, List, Dict, Union
 
 import pytest
 
-from fastclasses_json.api import dataclass_json
+from fastclasses_json.api import dataclass_json, JSONMixin
 
 
 def test_decorator():
@@ -29,6 +29,15 @@ def test_decorator():
 
     assert B.to_dict
     assert B(1).to_dict
+
+    with pytest.raises(TypeError) as exc:
+        # missing @dataclass
+        @dataclass_json
+        class C:
+            x: int
+        C().to_dict()
+
+    assert str(exc.value) == "must be called with a dataclass type"
 
 
 def test_to_dict():
@@ -72,6 +81,25 @@ def test_to_json():
     )
 
 
+def test_to_json__json_mixin():
+
+    @dataclass_json
+    @dataclass
+    class A(JSONMixin):
+        x: int
+        y: str
+
+    assert A(5, 'hi').to_json() == '{"x":5,"y":"hi"}'
+    import textwrap
+    assert A(5, 'hi').to_json(indent=2) == textwrap.dedent(
+        """\
+        {
+          "x": 5,
+          "y": "hi"
+        }"""
+    )
+
+
 def test_from_json():
 
     @dataclass_json
@@ -81,6 +109,20 @@ def test_from_json():
         y: str
 
     assert A.from_json('{"x":5,"y":"hi"}') == A(5, 'hi')
+
+
+def test_from_json__json_mixin():
+
+    @dataclass_json
+    @dataclass
+    class A(JSONMixin):
+        x: int
+        y: str
+
+    assert A.from_json('{"x":5,"y":"hi"}') == A(5, 'hi')
+
+    with pytest.raises(NotImplementedError):
+        JSONMixin.from_json('{"x":5,"y":"hi"}')
 
 
 def test_to_dict__optional():
@@ -630,6 +672,86 @@ def test_from_dict__uuid():
 
     assert A.from_dict({'x': '8199d02b-e2fb-4d95-9bdc-d5db0dd0c66d'}) == \
         A(UUID('8199d02b-e2fb-4d95-9bdc-d5db0dd0c66d'))
+
+
+def test_to_dict__json_mixin():
+
+    @dataclass_json
+    @dataclass
+    class A:
+        x: JSONMixin
+
+    @dataclass_json
+    @dataclass
+    class B(JSONMixin):
+        y: str
+
+    assert A(B("hi")).to_dict() == {'x': {'y': 'hi'}}
+
+    class C(JSONMixin):
+        def to_dict(self) -> dict:
+            return {'I could be': 'anything'}
+
+    assert A(C()).to_dict() == {'x': {'I could be': 'anything'}}
+
+
+def test_to_dict__json_mixin_subclass():
+
+    class B(JSONMixin):
+        def to_dict(self) -> dict:
+            return {'I could be': 'anything'}
+
+    @dataclass_json
+    @dataclass
+    class A:
+        x: B
+
+    assert A(B()).to_dict() == {'x': {"I could be": "anything"}}
+
+
+if False:
+    # Still mulling this one over
+    def test_to_dict__has_to_dict_method():
+
+        class B:
+            def to_dict(self) -> dict:
+                return {'I could be': 'anything'}
+
+        @dataclass_json
+        @dataclass
+        class A:
+            x: B
+
+        assert A(B()).to_dict() == {'x': {"I could be": "anything"}}
+
+
+def test_from_dict__json_mixin():
+
+    @dataclass_json
+    @dataclass
+    class A:
+        x: JSONMixin
+
+    with pytest.raises(NotImplementedError):
+        A.from_dict({'x': {'y': 'hi'}})
+
+
+def test_from_dict__json_mixin_subclass():
+
+    @dataclass
+    class C(JSONMixin):
+        constant: str
+
+        @classmethod
+        def from_dict(cls, o):
+            return cls("always")
+
+    @dataclass_json
+    @dataclass
+    class A:
+        x: C
+
+    assert A.from_dict({'x': "don't matter"}) == A(C("always"))
 
 
 def test_to_dict__custom_encoder():
