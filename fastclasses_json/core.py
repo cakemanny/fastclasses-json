@@ -139,6 +139,7 @@ def _from_dict_source(cls):
     ]
 
     if HAS_DATEUTIL:
+        # TODO: only do this if we have used dateutil.parser in the end
         lines.insert(1, '    import dateutil.parser')
 
     fields_by_name = {f.name: f for f in dataclass_fields(cls)}
@@ -366,20 +367,12 @@ def expr_builder(t: type, depth=0, direction=_FROM):
                 return f'{t.__name__}._fastclasses_json_from_dict({expr})'
             return f
         else:
-            def f(expr):
-                # or should be have a function that takes the class and its
-                # type?
-                return f'({expr})._fastclasses_json_to_dict()'
-            return f
+            return lambda expr: f'({expr})._fastclasses_json_to_dict()'
     elif issubclass_safe(t, Enum):
         if direction == _FROM:
-            def f(expr):
-                return f'{t.__name__}({expr})'
-            return f
+            return lambda expr: f'{t.__name__}({expr})'
         else:
-            def f(expr):
-                return f'({expr}).value'
-            return f
+            return lambda expr: f'({expr}).value'
 
     from datetime import date, datetime
     if issubclass_safe(t, datetime):

@@ -17,10 +17,14 @@ class JSONMixin:
 
     @classmethod
     def from_json(cls, json_data: Union[str, bytes], *, infer_missing=True):
+        # TODO: make the message more useful?
         raise NotImplementedError
 
 
 def dataclass_json(cls=None):
+    """
+    TODO: add some documentation here
+    """
     if cls is not None:
         return _process_class(cls)
     return _process_class

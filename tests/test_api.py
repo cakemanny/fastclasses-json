@@ -547,6 +547,10 @@ def test_from_dict__dict_of_enum():
     assert B.from_dict({'a': {'marky': 'why'}}) == B({'marky': A.Y})
 
 
+# TODO: Add support for int, float and bool keys
+# and maybe other str-serialisable keys? dates, enums, uuids, etc?
+
+
 def test_to_dict__date():
     from datetime import date
 
