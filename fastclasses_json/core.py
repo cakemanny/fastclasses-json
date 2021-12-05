@@ -1,9 +1,14 @@
 from dataclasses import is_dataclass, fields as dataclass_fields, MISSING
+from datetime import date, datetime
+from decimal import Decimal
 from enum import Enum
+from uuid import UUID
+import json
 import sys
 import types
 import typing
 import warnings
+
 from .utils import issubclass_safe
 
 try:
@@ -19,7 +24,6 @@ _TO = 2
 
 
 def _process_class(cls):
-    import json
 
     if not is_dataclass(cls):
         raise TypeError("must be called with a dataclass type")
@@ -350,6 +354,7 @@ def expr_builder(t: type, depth=0, direction=_FROM):
             if hasattr(t, 'to_dict') and inspect.isfunction(t.to_dict):
                 return lambda expr: f'({expr}).to_dict()'
 
+    # have to import here since core is a dependency of api
     from fastclasses_json.api import JSONMixin
     if issubclass_safe(t, JSONMixin):
         if direction == _FROM:
@@ -374,7 +379,6 @@ def expr_builder(t: type, depth=0, direction=_FROM):
         else:
             return lambda expr: f'({expr}).value'
 
-    from datetime import date, datetime
     if issubclass_safe(t, datetime):
         if direction == _FROM:
             def f(expr):
@@ -397,14 +401,12 @@ def expr_builder(t: type, depth=0, direction=_FROM):
         else:
             return lambda expr: f'({expr}).isoformat()'
 
-    from decimal import Decimal
     if issubclass_safe(t, Decimal):
         if direction == _FROM:
             return lambda expr: f'{t.__name__}(str({expr}))'
         else:
             return lambda expr: f'str({expr})'
 
-    from uuid import UUID
     if issubclass_safe(t, UUID):
         if direction == _FROM:
             return lambda expr: f'{t.__name__}({expr})'
@@ -415,9 +417,7 @@ def expr_builder(t: type, depth=0, direction=_FROM):
 
 
 def referenced_types(cls):
-    from datetime import date, datetime
-    from decimal import Decimal
-    from uuid import UUID
+    from fastclasses_json.api import JSONMixin
 
     def extract_type(t):
         origin = typing.get_origin(t)
@@ -428,7 +428,7 @@ def referenced_types(cls):
             value_type_arg = typing.get_args(t)[1]
             return extract_type(value_type_arg)
         elif is_dataclass(t) or issubclass_safe(
-            t, (Enum, date, datetime, Decimal, UUID)
+            t, (Enum, date, datetime, Decimal, UUID, JSONMixin)
         ):
             return t
         return None

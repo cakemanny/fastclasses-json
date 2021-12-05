@@ -758,6 +758,28 @@ def test_from_dict__json_mixin_subclass():
     assert A.from_dict({'x': "don't matter"}) == A(C("always"))
 
 
+def test_from_dict__json_mixin_subclass_non_dataclass():
+
+    class C(JSONMixin):
+        def __init__(self, c):
+            self.c = c
+
+        def __eq__(self, o):
+            # should probably be a subclass check here but... its only a test
+            return self.c == o.c
+
+        @classmethod
+        def from_dict(cls, o):
+            return cls("always")
+
+    @dataclass_json
+    @dataclass
+    class A:
+        x: C
+
+    assert A.from_dict({'x': "don't matter"}) == A(C("always"))
+
+
 def test_to_dict__custom_encoder():
 
     @dataclass
