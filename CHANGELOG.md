@@ -8,6 +8,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Added way to type a field as being generically JSON seralisable by using
   the `JSONMixin` class.
+### Fixed
+- Performance issue caused by importing dateutil in every `from_dict`
+  when [python-dateutil] is installed
 
 ## [0.3.1] - 2021-11-12
 ### Fixed

@@ -39,4 +39,4 @@ jobs:
     - name: Test with dateutil
       run: |
         pip install pytest python-dateutil
-        pytest tests/test_api.py
+        pytest

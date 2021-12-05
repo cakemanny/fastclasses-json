@@ -90,13 +90,15 @@ def _replace_from_dict(cls, from_dict='from_dict'):
     ][0]
 
     the_globals = {
-        # use the defining modules globals
+        # use the defining module's globals
         **sys.modules[cls.__module__].__dict__,
         # along with any decoders
         **decoders(cls),
         # along with types we use for the conversion
         **referenced_types(cls),
     }
+    if HAS_DATEUTIL:
+        the_globals['dateutil'] = dateutil
 
     from_dict_func = types.FunctionType(
         from_dict_code,
@@ -120,7 +122,7 @@ def _replace_to_dict(cls, to_dict='to_dict'):
     ][0]
 
     the_globals = {
-        # use the defining modules globals
+        # use the defining module's globals
         **sys.modules[cls.__module__].__dict__,
         # along with any encoders
         **encoders(cls),
@@ -141,10 +143,6 @@ def _from_dict_source(cls):
         'def from_dict(cls, o, *, infer_missing):',
         '    args = {}',
     ]
-
-    if HAS_DATEUTIL:
-        # TODO: only do this if we have used dateutil.parser in the end
-        lines.insert(1, '    import dateutil.parser')
 
     fields_by_name = {f.name: f for f in dataclass_fields(cls)}
 
