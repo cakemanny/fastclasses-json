@@ -1,8 +1,9 @@
+PYTHON=python3
 
 venv: requirements.txt requirements-test.txt
-	python3 -m venv venv
+	$(PYTHON) -m venv venv
 	touch -t 01010000 venv
-	venv/bin/pip install --upgrade pip
+	venv/bin/pip install --upgrade pip setuptools
 	venv/bin/pip install -r requirements-test.txt
 	touch venv
 
