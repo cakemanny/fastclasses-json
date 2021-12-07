@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from fastclasses_json import dataclass_json
+from fastclasses_json import dataclass_json, JSONMixin
 import typing
 
 
@@ -34,3 +34,12 @@ print(A.from_dict({'x': 'hi'}, infer_missing=True))
 print(A.from_json('{"x":"hi"}'))
 print(A.from_json(b'{"x":"hi"}'))
 print(A.from_json('{"x":"hi"}', infer_missing=True))
+
+
+def f(x: JSONMixin) -> None:
+    print(x.to_json())
+
+
+# This should type check by the fact that a has all the methods
+# and that JSONMixin is a protocol
+f(a)

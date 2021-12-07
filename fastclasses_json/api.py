@@ -1,9 +1,10 @@
-from typing import Union
+from typing import Union, Protocol, runtime_checkable
 
 from .core import _process_class
 
 
-class JSONMixin:
+@runtime_checkable
+class JSONMixin(Protocol):
 
     def to_dict(self) -> dict:
         raise NotImplementedError

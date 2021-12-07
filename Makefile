@@ -1,7 +1,7 @@
 PYTHON=python3
 
 venv: requirements.txt requirements-test.txt
-	$(PYTHON) -m venv venv
+	$(PYTHON) -m venv --upgrade venv
 	touch -t 01010000 venv
 	venv/bin/pip install --upgrade pip setuptools
 	venv/bin/pip install -r requirements-test.txt
@@ -9,6 +9,7 @@ venv: requirements.txt requirements-test.txt
 
 test: venv
 	venv/bin/pytest
+	venv/bin/mypy --install-types --non-interactive tests/for_type_checking.py
 
 lint: venv
 	venv/bin/flake8 fastclasses_json
