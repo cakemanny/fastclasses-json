@@ -323,18 +323,30 @@ def expr_builder(t: type, depth=0, direction=_FROM):
     elif origin == dict and typing.get_args(t):
         key_type, value_type = typing.get_args(t)
 
-        if not issubclass_safe(key_type, str):
-            warnings.warn(f'to_json will not work for non-str key dict: {t}')
+        if key_type not in (str, int, float, bool):
+            warnings.warn(f'to_json will not work for dict with key: {t}')
             return identity
 
         inner = expr_builder(value_type, depth + 1, direction)
+
+        key_func = identity
+        if direction == _FROM:
+            if key_type is str:
+                pass
+            elif key_type in (int, float):
+                key_func = lambda k: f'{key_type.__name__}({k})'
+            elif key_type is bool:
+                t0 = f'__{depth}'
+                key_func = lambda k: f'(({t0}:={k}) is True or {k} == "true" )'
+            else:
+                assert False, f"missing case: {key_type}"
 
         def f(expr):
             k0 = f'__k{depth}'
             v0 = f'__v{depth}'
             return (
                 '{'
-                + f'{k0}: {inner(v0)} for {k0},{v0} in ({expr}).items()'
+                + f'{key_func(k0)}: {inner(v0)} for {k0},{v0} in ({expr}).items()'
                 + '}'
             )
         return f

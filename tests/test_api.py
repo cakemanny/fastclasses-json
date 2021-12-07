@@ -547,8 +547,30 @@ def test_from_dict__dict_of_enum():
     assert B.from_dict({'a': {'marky': 'why'}}) == B({'marky': A.Y})
 
 
-# TODO: Add support for int, float and bool keys
-# and maybe other str-serialisable keys? dates, enums, uuids, etc?
+# TODO: maybe other str-serialisable keys? dates, enums, uuids, etc?
+@pytest.mark.parametrize("KeyType,example,expected_json", [
+    (str, 'k', '{"a":{"k":{"b":"x"}}}'),
+    (int, 8, '{"a":{"8":{"b":"x"}}}'),
+    (float, 6.8, '{"a":{"6.8":{"b":"x"}}}'),
+    (bool, True, '{"a":{"true":{"b":"x"}}}'),
+    (bool, False, '{"a":{"false":{"b":"x"}}}'),
+])
+def test__dict_with_misc_keys(KeyType, example, expected_json):
+
+    @dataclass
+    class A:
+        b: str
+
+    @dataclass_json
+    @dataclass
+    class B:
+        a: Dict[KeyType, A]
+
+    assert B({example: A('x')}).to_dict() == {'a': {example: {'b': 'x'}}}
+    assert B({example: A('x')}).to_json() == expected_json
+
+    assert B.from_dict({'a': {example: {'b': 'x'}}}) == B({example: A('x')})
+    assert B.from_json(expected_json) == B({example: A('x')})
 
 
 def test_to_dict__date():
