@@ -344,6 +344,8 @@ def expr_builder(t: type, depth=0, direction=_FROM):
     if False:
         # Call to_dict method whenever it exists?
         # Probably not. It could be surprising.
+        # We should use a protocol class if possible to be able to
+        # check it in referenced_types as well
         import inspect
         if direction == _FROM:
             if hasattr(t, 'from_dict') and inspect.ismethod(t.from_dict):
@@ -352,13 +354,6 @@ def expr_builder(t: type, depth=0, direction=_FROM):
             if hasattr(t, 'to_dict') and inspect.isfunction(t.to_dict):
                 return lambda expr: f'({expr}).to_dict()'
 
-    # have to import here since core is a dependency of api
-    from fastclasses_json.api import JSONMixin
-    if issubclass_safe(t, JSONMixin):
-        if direction == _FROM:
-            return lambda expr: f'{t.__name__}.from_dict({expr})'
-        else:
-            return lambda expr: f'({expr}).to_dict()'
     if is_dataclass(t):
         # Give indirectly referenced dataclasses a to_dict method without
         # trashing their public API
@@ -415,7 +410,6 @@ def expr_builder(t: type, depth=0, direction=_FROM):
 
 
 def referenced_types(cls):
-    from fastclasses_json.api import JSONMixin
 
     def extract_type(t):
         origin = typing.get_origin(t)
@@ -426,7 +420,7 @@ def referenced_types(cls):
             value_type_arg = typing.get_args(t)[1]
             return extract_type(value_type_arg)
         elif is_dataclass(t) or issubclass_safe(
-            t, (Enum, date, datetime, Decimal, UUID, JSONMixin)
+            t, (Enum, date, datetime, Decimal, UUID)
         ):
             return t
         return None
