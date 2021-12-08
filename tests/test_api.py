@@ -1,5 +1,6 @@
 from dataclasses import dataclass, field
-from typing import Optional, List, Dict, Union, Mapping, MutableMapping, Sequence
+from typing import Optional, List, Dict, Union, Mapping, MutableMapping, Sequence, Tuple
+import textwrap
 
 import pytest
 
@@ -71,7 +72,6 @@ def test_to_json():
         y: str
 
     assert A(5, 'hi').to_json() == '{"x":5,"y":"hi"}'
-    import textwrap
     assert A(5, 'hi').to_json(indent=2) == textwrap.dedent(
         """\
         {
@@ -90,7 +90,6 @@ def test_to_json__json_mixin():
         y: str
 
     assert A(5, 'hi').to_json() == '{"x":5,"y":"hi"}'
-    import textwrap
     assert A(5, 'hi').to_json(indent=2) == textwrap.dedent(
         """\
         {
@@ -260,6 +259,87 @@ def test_from_dict__sequences():
             'a': 'yyy',
         }]
     }) == B([A('xxx'), A('yyy')])
+
+
+def test_to_dict__finite_tuples():
+
+    @dataclass
+    class A:
+        a: str
+
+    @dataclass
+    class B:
+        b: str
+
+    @dataclass_json
+    @dataclass
+    class C:
+        c: Tuple[A, B]
+
+    assert C([A('xxx'), B('yyy')]).to_dict() == {
+        'c': ({
+            'a': 'xxx',
+        }, {
+            'b': 'yyy',
+        })
+    }
+    assert C([A('xxx'), B('yyy')]).to_json() == \
+        '{"c":[{"a":"xxx"},{"b":"yyy"}]}'
+
+    assert C.from_dict({'c': ({'a': 'xxx'}, {'b': 'yyy'},)}) \
+        == C(c=(A('xxx'), B('yyy'),))
+    assert C.from_json('{"c":[{"a":"xxx"},{"b":"yyy"}]}') \
+        == C(c=(A('xxx'), B('yyy'),))
+
+    @dataclass_json
+    @dataclass
+    class D:
+        d: Tuple[List[A], List[B]]
+
+    assert D(d=([A('xxx'), A('xx')], [B('yyy'), B('yy')])).to_dict() == {
+        'd': ([{'a': 'xxx'}, {'a': 'xx'}],
+              [{'b': 'yyy'}, {'b': 'yy'}])
+    }
+
+
+def test_to_dict__infinite_tuples():
+
+    @dataclass
+    class A:
+        a: str
+
+    @dataclass_json
+    @dataclass
+    class B:
+        a: Tuple[A, ...]
+
+    assert B([A('xxx'), A('yyy')]).to_dict() == {
+        'a': ({
+            'a': 'xxx',
+        }, {
+            'a': 'yyy',
+        })
+    }
+
+
+def test_from_dict__infinite_tuples():
+
+    @dataclass
+    class A:
+        a: str
+
+    @dataclass_json
+    @dataclass
+    class B:
+        a: Tuple[A, ...]
+
+    assert B.from_dict({
+        'a': [{
+            'a': 'xxx',
+        }, {
+            'a': 'yyy',
+        }]
+    }) == B(a=(A('xxx'), A('yyy'),))
 
 
 def test_to_dict__optional_nested():

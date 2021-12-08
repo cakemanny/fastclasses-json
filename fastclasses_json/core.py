@@ -313,6 +313,33 @@ def expr_builder(t: type, depth=0, direction=_FROM):
             return f'{inner(t0)} if ({t0}:=({expr})) is not None else None'
 
         return f
+    elif origin == tuple and typing.get_args(t):
+        type_args = typing.get_args(t)
+        if type_args[1:] == (Ellipsis,):
+            inner = expr_builder(type_args[0], depth + 1, direction)
+
+            def f(expr):
+                t0 = f'__{depth}'
+                return f'tuple({inner(t0)} for {t0} in {expr})'
+            return f
+        else:
+            inners = [
+                expr_builder(type_arg, depth + 1, direction)
+                for type_arg in type_args
+            ]
+
+            def f(expr):
+                t0 = f'__{depth}'
+
+                e1 = f'{t0}:=({expr})'
+                parts = ['(']
+                for i, inner in enumerate(inners):
+                    xx = f'{t0}[{i}]'
+                    parts.append(f'{inner(xx)},')
+                parts.append(')')
+                e2 = ''.join(parts)
+                return f'({e1},{e2})[1]'
+            return f
     elif issubclass_safe(origin, abc.Sequence) and typing.get_args(t):
         type_arg = typing.get_args(t)[0]
         inner = expr_builder(type_arg, depth + 1, direction)
@@ -338,7 +365,7 @@ def expr_builder(t: type, depth=0, direction=_FROM):
                 key_func = lambda k: f'{key_type.__name__}({k})'
             elif key_type is bool:
                 t0 = f'__{depth}'
-                key_func = lambda k: f'(({t0}:={k}) is True or {k} == "true" )'
+                key_func = lambda k: f'(({t0}:=({k})) is True or {k} == "true" )'
             elif key_type is UUID:
                 key_func = lambda k: f'{key_type.__name__}({k})'
             else:
@@ -433,6 +460,11 @@ def referenced_types(cls):
     # multiple types
     def extract_types(t):
         origin = typing.get_origin(t)
+        if origin == tuple and typing.get_args(t):
+            xs = tuple()
+            for type_arg in typing.get_args(t):
+                xs += extract_types(type_arg)
+            return xs
         if (origin == typing.Union
                 or issubclass_safe(origin, abc.Sequence)) and typing.get_args(t):
             type_arg = typing.get_args(t)[0]
