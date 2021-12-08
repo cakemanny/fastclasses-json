@@ -7,7 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Added
 - Support for all kinds of keys types that `json.dumps` supports, for `Dict`
-  fields.
+  fields. And UUIDs
+- Support for Mapping and Sequence
 
 ## [0.3.2] - 2021-12-07
 ### Fixed

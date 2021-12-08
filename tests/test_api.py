@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from typing import Optional, List, Dict, Union
+from typing import Optional, List, Dict, Union, Mapping, MutableMapping, Sequence
 
 import pytest
 
@@ -212,6 +212,46 @@ def test_from_dict__list_nested():
     @dataclass
     class B:
         a: List[A]
+
+    assert B.from_dict({
+        'a': [{
+            'a': 'xxx',
+        }, {
+            'a': 'yyy',
+        }]
+    }) == B([A('xxx'), A('yyy')])
+
+
+def test_to_dict__sequences():
+
+    @dataclass
+    class A:
+        a: str
+
+    @dataclass_json
+    @dataclass
+    class B:
+        a: Sequence[A]
+
+    assert B([A('xxx'), A('yyy')]).to_dict() == {
+        'a': [{
+            'a': 'xxx',
+        }, {
+            'a': 'yyy',
+        }]
+    }
+
+
+def test_from_dict__sequences():
+
+    @dataclass
+    class A:
+        a: str
+
+    @dataclass_json
+    @dataclass
+    class B:
+        a: Sequence[A]
 
     assert B.from_dict({
         'a': [{
@@ -547,7 +587,6 @@ def test_from_dict__dict_of_enum():
     assert B.from_dict({'a': {'marky': 'why'}}) == B({'marky': A.Y})
 
 
-# TODO: maybe other str-serialisable keys? dates, enums, uuids, etc?
 @pytest.mark.parametrize("KeyType,example,expected_json", [
     (str, 'k', '{"a":{"k":{"b":"x"}}}'),
     (int, 8, '{"a":{"8":{"b":"x"}}}'),
@@ -571,6 +610,68 @@ def test__dict_with_misc_keys(KeyType, example, expected_json):
 
     assert B.from_dict({'a': {example: {'b': 'x'}}}) == B({example: A('x')})
     assert B.from_json(expected_json) == B({example: A('x')})
+
+
+def test__dict_with_uuid_keys():
+    from uuid import UUID
+
+    @dataclass
+    class A:
+        b: str
+
+    @dataclass_json
+    @dataclass
+    class B:
+        a: Dict[UUID, A]
+
+    example = UUID('8199d02b-e2fb-4d95-9bdc-d5db0dd0c66d')
+    expected_json = '{"a":{"8199d02b-e2fb-4d95-9bdc-d5db0dd0c66d":{"b":"x"}}}'
+
+    assert B({example: A('x')}).to_dict() == \
+        {'a': {'8199d02b-e2fb-4d95-9bdc-d5db0dd0c66d': {'b': 'x'}}}
+    assert B({example: A('x')}).to_json() == expected_json
+
+    assert B.from_dict({'a': {'8199d02b-e2fb-4d95-9bdc-d5db0dd0c66d': {'b': 'x'}}}) \
+        == B({example: A('x')})
+    assert B.from_json(expected_json) == B({example: A('x')})
+
+# TODO: maybe other str-serialisable keys? dates, enums, etc?
+
+
+def test__mappings():
+
+    @dataclass
+    class A:
+        b: str
+
+    @dataclass_json
+    @dataclass
+    class B:
+        a: Mapping[str, A]
+
+    # FIXME: we should test this with an immutable map
+    # // the bare minimum that implements the interface
+    assert B({'kat': A('x')}).to_dict() == {'a': {'kat': {'b': 'x'}}}
+
+    assert B.from_dict({'a': {'kat': {'b': 'x'}}}) == B({'kat': A('x')})
+
+
+def test__mutable_mappings():
+
+    @dataclass
+    class A:
+        b: str
+
+    @dataclass_json
+    @dataclass
+    class B:
+        a: MutableMapping[str, A]
+
+    # FIXME: we should test this with an immutable map
+    # // the bare minimum that implements the interface
+    assert B({'kat': A('x')}).to_dict() == {'a': {'kat': {'b': 'x'}}}
+
+    assert B.from_dict({'a': {'kat': {'b': 'x'}}}) == B({'kat': A('x')})
 
 
 def test_to_dict__date():

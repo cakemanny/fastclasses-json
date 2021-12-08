@@ -1,3 +1,4 @@
+from collections import abc
 from dataclasses import is_dataclass, fields as dataclass_fields, MISSING
 from datetime import date, datetime
 from decimal import Decimal
@@ -312,7 +313,7 @@ def expr_builder(t: type, depth=0, direction=_FROM):
             return f'{inner(t0)} if ({t0}:=({expr})) is not None else None'
 
         return f
-    elif origin == list and typing.get_args(t):
+    elif issubclass_safe(origin, abc.Sequence) and typing.get_args(t):
         type_arg = typing.get_args(t)[0]
         inner = expr_builder(type_arg, depth + 1, direction)
 
@@ -320,10 +321,10 @@ def expr_builder(t: type, depth=0, direction=_FROM):
             t0 = f'__{depth}'
             return f'[{inner(t0)} for {t0} in {expr}]'
         return f
-    elif origin == dict and typing.get_args(t):
+    elif issubclass_safe(origin, abc.Mapping) and typing.get_args(t):
         key_type, value_type = typing.get_args(t)
 
-        if key_type not in (str, int, float, bool):
+        if key_type not in (str, int, float, bool, UUID):
             warnings.warn(f'to_json will not work for dict with key: {t}')
             return identity
 
@@ -338,8 +339,13 @@ def expr_builder(t: type, depth=0, direction=_FROM):
             elif key_type is bool:
                 t0 = f'__{depth}'
                 key_func = lambda k: f'(({t0}:={k}) is True or {k} == "true" )'
+            elif key_type is UUID:
+                key_func = lambda k: f'{key_type.__name__}({k})'
             else:
                 assert False, f"missing case: {key_type}"
+        else:
+            if key_type is UUID:
+                key_func = lambda k: f'str({k})'
 
         def f(expr):
             k0 = f'__k{depth}'
@@ -423,23 +429,27 @@ def expr_builder(t: type, depth=0, direction=_FROM):
 
 def referenced_types(cls):
 
-    def extract_type(t):
+    # If we support tuples or unions properly, this needsto return
+    # multiple types
+    def extract_types(t):
         origin = typing.get_origin(t)
-        if (origin == typing.Union or origin == list) and typing.get_args(t):
+        if (origin == typing.Union
+                or issubclass_safe(origin, abc.Sequence)) and typing.get_args(t):
             type_arg = typing.get_args(t)[0]
-            return extract_type(type_arg)
-        elif origin == dict and typing.get_args(t):
-            value_type_arg = typing.get_args(t)[1]
-            return extract_type(value_type_arg)
+            return extract_types(type_arg)
+        elif issubclass_safe(origin, abc.Mapping) and typing.get_args(t):
+            key_type_arg, value_type_arg = typing.get_args(t)
+            if key_type_arg is UUID:
+                return (UUID,) + extract_types(value_type_arg)
+            return extract_types(value_type_arg)
         elif is_dataclass(t) or issubclass_safe(
             t, (Enum, date, datetime, Decimal, UUID)
         ):
-            return t
-        return None
+            return (t,)
+        return tuple()
 
     types = {}
     for _, field_type in typing.get_type_hints(cls).items():
-        t = extract_type(field_type)
-        if t is not None:
+        for t in extract_types(field_type):
             types[t.__name__] = t
     return types
