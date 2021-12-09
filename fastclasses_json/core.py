@@ -358,13 +358,14 @@ def expr_builder(t: type, depth=0, direction=_FROM):
           and typing.get_args(t)):
         key_type, value_type = typing.get_args(t)
 
+        # TODO: Enums, dates and decimals should be trivial to add here
         if key_type not in (str, int, float, bool, UUID):
             warnings.warn(f'to_json will not work for dict with key: {t}')
             return identity
 
         inner = expr_builder(value_type, depth + 1, direction)
 
-        key_func = identity
+        key_func = expr_builder(key_type, depth + 1, direction)
         if direction == _FROM:
             if key_type is str:
                 pass
@@ -373,13 +374,6 @@ def expr_builder(t: type, depth=0, direction=_FROM):
             elif key_type is bool:
                 t0 = f'__{depth}'
                 key_func = lambda k: f'(({t0}:=({k})) is True or {k} == "true" )'
-            elif key_type is UUID:
-                key_func = lambda k: f'{key_type.__name__}({k})'
-            else:
-                assert False, f"missing case: {key_type}"
-        else:
-            if key_type is UUID:
-                key_func = lambda k: f'str({k})'
 
         def f(expr):
             k0 = f'__k{depth}'
