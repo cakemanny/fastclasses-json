@@ -1,6 +1,8 @@
 from dataclasses import dataclass, field
 from typing import Optional, List, Dict, Union, Mapping, MutableMapping, Sequence, Tuple
+import collections
 import textwrap
+import typing
 
 import pytest
 
@@ -747,11 +749,36 @@ def test__mutable_mappings():
     class B:
         a: MutableMapping[str, A]
 
-    # FIXME: we should test this with an immutable map
-    # // the bare minimum that implements the interface
+    # TODO: we should test this with collections.ChainMap ?
     assert B({'kat': A('x')}).to_dict() == {'a': {'kat': {'b': 'x'}}}
 
     assert B.from_dict({'a': {'kat': {'b': 'x'}}}) == B({'kat': A('x')})
+
+
+def test__ordered_dict__not_yet_supported():
+
+    @dataclass
+    class A:
+        b: str
+
+    @dataclass_json
+    @dataclass
+    class B:
+        a: typing.OrderedDict[str, A]
+
+    od: typing.OrderedDict = collections.OrderedDict([('kat', A('x'))])
+
+    if False:
+        assert B(od).to_dict() == {'a': {'kat': {'b': 'x'}}}
+
+        b: B = B.from_dict({'a': {'kat': {'b': 'x'}}})
+        # OrderedDict has this method
+        b.a.move_to_end('kat')
+
+        assert b == B(od)
+
+    # Support not added yet
+    assert B(od).to_dict() == {'a': od}
 
 
 def test_to_dict__date():

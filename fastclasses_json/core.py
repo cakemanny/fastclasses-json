@@ -315,6 +315,7 @@ def expr_builder(t: type, depth=0, direction=_FROM):
         return f
     elif origin == tuple and typing.get_args(t):
         type_args = typing.get_args(t)
+        # Tuple[A, ...] means an any-length tuple of all As
         if type_args[1:] == (Ellipsis,):
             inner = expr_builder(type_args[0], depth + 1, direction)
 
@@ -338,9 +339,13 @@ def expr_builder(t: type, depth=0, direction=_FROM):
                     parts.append(f'{inner(xx)},')
                 parts.append(')')
                 e2 = ''.join(parts)
+                # e1 is just for evaluating expr no more than once
+                # e2 is the actual result
                 return f'({e1},{e2})[1]'
             return f
-    elif issubclass_safe(origin, abc.Sequence) and typing.get_args(t):
+    elif (issubclass_safe(origin, abc.Sequence)
+          and issubclass_safe(list, origin)
+          and typing.get_args(t)):
         type_arg = typing.get_args(t)[0]
         inner = expr_builder(type_arg, depth + 1, direction)
 
@@ -348,7 +353,9 @@ def expr_builder(t: type, depth=0, direction=_FROM):
             t0 = f'__{depth}'
             return f'[{inner(t0)} for {t0} in {expr}]'
         return f
-    elif issubclass_safe(origin, abc.Mapping) and typing.get_args(t):
+    elif (issubclass_safe(origin, abc.Mapping)
+          and issubclass_safe(dict, origin)
+          and typing.get_args(t)):
         key_type, value_type = typing.get_args(t)
 
         if key_type not in (str, int, float, bool, UUID):
