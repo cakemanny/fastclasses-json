@@ -844,6 +844,22 @@ def test_from_dict__datetime():
         == A(datetime(2021, 6, 17, 10, 0, 0, tzinfo=timezone.utc))
 
 
+def test_from_dict__datetime_subclass():
+    from datetime import datetime
+
+    class MyDatetime(datetime):
+        def is_the_queens_birthday(self):
+            return self.month == 4 and self.day == 21
+
+    @dataclass_json
+    @dataclass
+    class A:
+        x: MyDatetime
+
+    a = A.from_dict({'x': "2021-04-21T10:00:00"})
+    assert a.x.is_the_queens_birthday() is True
+
+
 def test_datetimes_not_supported_by_standard_library():
     pytest.importorskip("dateutil")
     from datetime import datetime, timezone

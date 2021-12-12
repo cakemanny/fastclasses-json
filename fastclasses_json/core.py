@@ -422,8 +422,7 @@ def expr_builder(t: type, depth=0, direction=_FROM):
         if direction == _FROM:
             def f(expr):
                 t0 = f'__{depth}'
-                if HAS_DATEUTIL:
-                    # doesn't work for subclasses... but
+                if HAS_DATEUTIL and issubclass_safe(datetime, t):
                     return f'dateutil.parser.isoparse({expr})'
                 else:
                     return (f'{t.__name__}.fromisoformat('

@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Support for all kinds of keys types that `json.dumps` supports, for `Dict`
   fields. And UUIDs
 - Support for Mapping, Sequence and Tuple fields
+### Fixed
+- Not producing subclasses of datetime when [python-dateutil] is installed.
 
 ## [0.3.2] - 2021-12-07
 ### Fixed
