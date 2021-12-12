@@ -1,4 +1,4 @@
-PYTHON=python3
+PYTHON ?= python3
 
 venv: requirements.txt requirements-test.txt
 	$(PYTHON) -m venv venv

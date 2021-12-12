@@ -373,7 +373,7 @@ def expr_builder(t: type, depth=0, direction=_FROM):
                 key_func = lambda k: f'{key_type.__name__}({k})'
             elif key_type is bool:
                 t0 = f'__{depth}'
-                key_func = lambda k: f'(({t0}:=({k})) is True or {k} == "true" )'
+                key_func = lambda k: f'(({t0}:=({k})) is True or {k} == "true")'
 
         def f(expr):
             k0 = f'__k{depth}'
