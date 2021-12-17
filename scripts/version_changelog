@@ -1,0 +1,149 @@
+#!/usr/bin/env python3
+
+import sys
+import re
+from dataclasses import dataclass
+from typing import Optional
+
+
+class ParseError(Exception):
+    def __init__(self, colno):
+        super().__init__(colno)
+        self.colno = colno
+
+    # This is fine to do because this is a user input error
+    # rather than a programming error
+    def __eq__(self, other):
+        return isinstance(other, ParseError) and other.colno == self.colno
+
+
+def print_usage_and_exit(exit_code=1):
+    out = sys.stdout if exit_code == 0 else sys.stderr
+    print(f"{sys.argv[0]} <new version>", file=out)
+    exit(1)
+
+
+def parse_version(line):
+    assert line.startswith("## [")
+    i = 4
+    dots = 0
+    current = ''
+    while i < len(line):
+        c = line[i]
+        if c.isdigit():
+            current += c
+        elif c == '.':
+            if dots == 2:
+                raise ParseError(i)
+            dots += 1
+            current += c
+        elif c == ']':
+            if not current[-1].isdigit():
+                raise ParseError(i)
+            break
+        else:
+            raise ParseError(i)
+        i += 1
+    if c != ']' or dots != 2:
+        raise ParseError(i)
+    return current
+
+
+def test_parse_version():
+    assert parse_version('## [0.1.0]\n') == '0.1.0'
+    assert parse_version('## [1.29.1]\n') == '1.29.1'
+
+    e = None
+    try:
+        parse_version('## [1.29.1\n')
+    except ParseError as e1:
+        e = e1
+    assert e == ParseError(10,), f"{e!r}"
+    e = None
+    try:
+        parse_version('## [1.29.1.8]\n')
+    except ParseError as e1:
+        e = e1
+    assert e == ParseError(10,), f"{e!r}"
+    e = None
+    try:
+        parse_version('## [1.29]\n')
+    except ParseError as e1:
+        e = e1
+    assert e == ParseError(8,), f"{e!r}"
+
+
+test_parse_version()
+
+
+# Not using this bit yet
+def parse_cmdline_args():
+    # The idea would be to have Unreleased changes be moved under the new
+    # version and have it dated... todo
+    if len(sys.argv) < 2:
+        print_usage_and_exit()
+    new_version = sys.argv[1]
+
+    if not re.match(r'^\d+\.\d+\.\d+', new_version):
+        print(f"version is not semver: {new_version}", file=sys.stderr)
+        print_usage_and_exit()
+
+
+with open('CHANGELOG.md', 'r') as f:
+    lines = f.readlines()
+
+
+@dataclass
+class LineInfo:
+    line: str
+    is_unreleased: bool = False
+    version: Optional[str] = None
+    valid: bool = True
+
+
+annotated_lines = []
+
+for lineno, line in enumerate(lines):
+    if line.startswith("## [Unreleased]"):
+        annotated_lines.append(LineInfo(line, is_unreleased=True))
+    elif line.startswith("## ["):
+        try:
+            version = parse_version(line)
+            annotated_lines.append(LineInfo(line, version=version))
+        except ParseError as e:
+            print(f"CHANGELOG.md:{lineno}: invalid version", file=sys.stderr)
+            print(f"{line}", file=sys.stderr, end='')
+            print((e.colno * ' ') + "^", file=sys.stderr)
+            annotated_lines.append(LineInfo(line, valid=False))
+    else:
+        annotated_lines.append(LineInfo(line))
+
+if not all(line_info.valid for line_info in annotated_lines):
+    exit(1)
+
+versions = [
+    line.version for line in reversed(annotated_lines) if line.version
+]
+graph = list(zip(versions, versions[1:]))
+repo_url = "https://github.com/cakemanny/fastclasses-json"
+links = [
+    f"[{v}]: {repo_url}/releases/tag/v{v}" for v in versions[:1]
+] + [
+    f"[{v_to}]: {repo_url}/compare/v{v_from}...v{v_to}"
+    for (v_from, v_to) in graph
+] + [
+    f"[Unreleased]: {repo_url}/compare/v{v}...HEAD" for v in versions[-1:]
+]
+
+emit = True
+with open('CHANGELOG.md', 'w') as f:
+    for line_info in annotated_lines:
+        if 'VERSION LINKS END' in line_info.line:
+            emit = True
+        if emit:
+            f.write(line_info.line)
+        if 'VERSION LINKS START' in line_info.line:
+            emit = False
+            for link in reversed(links):
+                f.write(link)
+                f.write("\n")

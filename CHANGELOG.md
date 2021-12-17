@@ -5,6 +5,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+## [0.4.0] - 2021-12-17
 ### Added
 - Support for all kinds of keys types that `json.dumps` supports, for `Dict`
   fields. And UUIDs
@@ -27,7 +29,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Support the use of defaults and `default_factory` when deserialising.
 
 ## [0.2.3] - 2021-11-06
-## Fixed
+### Fixed
 - The mypy plugin not working in external projects due to mypy refusing
   to analyse the module.
 
@@ -54,7 +56,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - This CHANGELOG file
 - Support for Decimals and UUIDs
 
-[Unreleased]: https://github.com/cakemanny/fastclasses-json/compare/v0.3.2...HEAD
+<!-- VERSION LINKS START -->
+[Unreleased]: https://github.com/cakemanny/fastclasses-json/compare/v0.4.0...HEAD
+[0.4.0]: https://github.com/cakemanny/fastclasses-json/compare/v0.3.2...v0.4.0
 [0.3.2]: https://github.com/cakemanny/fastclasses-json/compare/v0.3.1...v0.3.2
 [0.3.1]: https://github.com/cakemanny/fastclasses-json/compare/v0.3.0...v0.3.1
 [0.3.0]: https://github.com/cakemanny/fastclasses-json/compare/v0.2.3...v0.3.0
@@ -63,5 +67,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [0.2.1]: https://github.com/cakemanny/fastclasses-json/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/cakemanny/fastclasses-json/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/cakemanny/fastclasses-json/releases/tag/v0.1.0
+<!-- VERSION LINKS END -->
 [user-Borealin]: https://github.com/Borealin
 [#5]: https://github.com/cakemanny/fastclasses-json/issues/5
