@@ -5,7 +5,7 @@ with open('README.md', 'r', encoding='utf-8') as f:
 
 setup(
     name='fastclasses-json',
-    version='0.4.0',
+    version='0.4.1',
     packages=find_packages(exclude=('tests*',)),
     package_data={"fastclasses_json": ["py.typed"]},
     author='Daniel Golding',
