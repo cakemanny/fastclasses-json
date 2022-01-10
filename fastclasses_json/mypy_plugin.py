@@ -1,7 +1,11 @@
+from typing import Optional, List
+
 from mypy.plugin import Plugin, ClassDefContext
 from mypy.plugins.common import add_method_to_class
 
-from mypy.types import AnyType, TypeOfAny, CallableType, UnionType, NoneType
+from mypy.types import (
+    AnyType, TypeOfAny, CallableType, UnionType, NoneType, Type, Instance
+)
 from mypy.typevars import fill_typevars
 from mypy.nodes import (
     ARG_POS, ARG_NAMED_OPT, MDEF, Argument, Var, FuncDef, Block, PassStmt,
@@ -23,13 +27,26 @@ def plugin(version: str):
     return FastclassesJsonPlugin
 
 
+def builtin_type(
+    api, unqualified_name: str, args: Optional[List[Type]] = None
+) -> Instance:
+    """
+    This is a wrapper to handle the breaking changes made in
+    https://github.com/python/mypy/pull/11332
+    """
+    t = api.named_type_or_none(f"builtins.{unqualified_name}", args)
+    if t is not None:
+        return t
+    return api.named_type(f"__builtins__.{unqualified_name}", args)
+
+
 def update_dataclass_json_type(ctx: ClassDefContext) -> None:
 
-    str_type = ctx.api.named_type('__builtins__.str')
-    int_type = ctx.api.named_type('__builtins__.int')
+    str_type = builtin_type(ctx.api, "str")
+    int_type = builtin_type(ctx.api, "int")
 
     sep_type = UnionType.make_union([
-        ctx.api.named_type('__builtins__.tuple', [str_type, str_type]),
+        builtin_type(ctx.api, 'tuple', [str_type, str_type]),
         NoneType()
     ])
     indent_type = UnionType.make_union([int_type, NoneType()])
@@ -49,16 +66,15 @@ def update_dataclass_json_type(ctx: ClassDefContext) -> None:
 
     # It would be lovely to actually have this return a typed dict ;)
 
-    json_dict_type = ctx.api.named_type(
-        '__builtins__.dict',
-        [str_type, AnyType(TypeOfAny.explicit)]
+    json_dict_type = builtin_type(
+        ctx.api, 'dict', [str_type, AnyType(TypeOfAny.explicit)]
     )
     add_method_to_class(
         ctx.api, ctx.cls, 'to_dict', args=[], return_type=json_dict_type
     )
 
     instance_type = fill_typevars(ctx.cls.info)
-    bool_type = ctx.api.named_type('__builtins__.bool')
+    bool_type = builtin_type(ctx.api, 'bool')
     args = [
         Argument(Var('o', json_dict_type), json_dict_type, None, ARG_POS),
         Argument(
@@ -71,7 +87,7 @@ def update_dataclass_json_type(ctx: ClassDefContext) -> None:
         return_type=instance_type,
     )
 
-    bytes_type = ctx.api.named_type('__builtins__.bytes')
+    bytes_type = builtin_type(ctx.api, 'bytes')
     json_data_type = UnionType.make_union([str_type, bytes_type])
 
     args = [
@@ -106,7 +122,7 @@ def add_classmethod_to_class(
     self_type = self_type or fill_typevars(info)
     class_type = api.class_type(self_type)
 
-    function_type = api.named_type('__builtins__.function')
+    function_type = builtin_type(api, 'function')
 
     args = [Argument(Var('cls'), class_type, None, ARG_POS)] + args
     arg_types, arg_names, arg_kinds = [], [], []
