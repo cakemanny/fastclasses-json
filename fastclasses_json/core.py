@@ -19,15 +19,16 @@ try:
 except Exception:
     HAS_DATEUTIL = False
 
+PY_37 = sys.version_info[:2] == (3, 7)
 
 # Essentially if we are on python version 3.8 or above
-if hasattr(typing, 'get_origin'):
-    typing_get_origin = typing.get_origin
-    typing_get_args = typing.get_args
-else:
+if PY_37:
     import typing_extensions
     typing_get_origin = typing_extensions.get_origin
     typing_get_args = typing_extensions.get_args
+else:
+    typing_get_origin = typing.get_origin
+    typing_get_args = typing.get_args
 
 
 _FROM = 1
@@ -320,6 +321,9 @@ def expr_builder(t: type, depth=0, direction=_FROM):
 
         def f(expr):
             t0 = f'__{depth}'
+            if PY_37:
+                # Lazy solution for py37'ers
+                return f'{inner(expr)} if ({expr}) is not None else None'
             return f'{inner(t0)} if ({t0}:=({expr})) is not None else None'
 
         return f
@@ -436,6 +440,11 @@ def expr_builder(t: type, depth=0, direction=_FROM):
                 if HAS_DATEUTIL and issubclass_safe(datetime, t):
                     return f'dateutil.parser.isoparse({expr})'
                 else:
+                    if PY_37:
+                        return (f'{t.__name__}.fromisoformat('
+                                f'({expr})[:-1]+"+00:00" if ({expr})[-1]=="Z" '
+                                f'else ({expr})'
+                                ')')
                     return (f'{t.__name__}.fromisoformat('
                             f'{t0}[:-1]+"+00:00" if ({t0}:={expr})[-1]=="Z" '
                             f'else {t0}'
