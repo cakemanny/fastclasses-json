@@ -350,9 +350,13 @@ def expr_builder(t: type, depth=0, direction=_FROM):
                 parts = ['(']
                 for i, inner in enumerate(inners):
                     xx = f'{t0}[{i}]'
+                    if PY_37:
+                        xx = f'({expr})[{i}]'
                     parts.append(f'{inner(xx)},')
                 parts.append(')')
                 e2 = ''.join(parts)
+                if PY_37:
+                    return e2
                 # e1 is just for evaluating expr no more than once
                 # e2 is the actual result
                 return f'({e1},{e2})[1]'
