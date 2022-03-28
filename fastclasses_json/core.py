@@ -20,6 +20,29 @@ except Exception:
     HAS_DATEUTIL = False
 
 
+# Essentially if we are on python version 3.8 or above
+if hasattr(typing, 'get_origin'):
+    typing_get_origin = typing.get_origin
+    typing_get_args = typing.get_args
+else:
+    def typing_get_origin(tp):
+        if isinstance(tp, typing._GenericAlias):
+            return tp.__origin__
+        if tp is typing.Generic:
+            return typing.Generic
+        return None
+    import collections
+
+    def typing_get_args(tp):
+        if isinstance(tp, typing._GenericAlias) and not tp._special:
+            res = tp.__args__
+            if (typing_get_origin(tp) is collections.abc.Callable
+                    and res[0] is not Ellipsis):
+                res = (list(res[:-1]), res[-1])
+            return res
+        return ()
+
+
 _FROM = 1
 _TO = 2
 
@@ -150,8 +173,8 @@ def _from_dict_source(cls):
     for name, field_type in typing.get_type_hints(cls).items():
 
         # pop off the top layer of optional, since we are using o.get
-        if typing.get_origin(field_type) == typing.Union:
-            field_type = typing.get_args(field_type)[0]
+        if typing_get_origin(field_type) == typing.Union:
+            field_type = typing_get_args(field_type)[0]
 
         field = fields_by_name[name]
 
@@ -235,10 +258,10 @@ def _to_dict_source(cls):
         if transform('x') != 'x':
             # since we have an is not none check, elide the first level
             # of optional
-            if (typing.get_origin(field_type) == typing.Union
+            if (typing_get_origin(field_type) == typing.Union
                     # This is a bit yuk. Premature optimization 🙄
                     and transform('x') == expr_builder_to(field_type)('x')):
-                transform = expr_builder_to(typing.get_args(field_type)[0])
+                transform = expr_builder_to(typing_get_args(field_type)[0])
             lines.append(f'    value = {access}')
             lines.append(f'    if value is not None:')  # noqa: F541
             lines.append(f'        value = ' + transform('value'))  # noqa: E501,F541
@@ -302,10 +325,10 @@ def expr_builder(t: type, depth=0, direction=_FROM):
 
     # Container types
 
-    origin = typing.get_origin(t)
+    origin = typing_get_origin(t)
 
     if origin == typing.Union:
-        type_arg = typing.get_args(t)[0]
+        type_arg = typing_get_args(t)[0]
         inner = expr_builder(type_arg, depth + 1, direction)
 
         def f(expr):
@@ -313,8 +336,8 @@ def expr_builder(t: type, depth=0, direction=_FROM):
             return f'{inner(t0)} if ({t0}:=({expr})) is not None else None'
 
         return f
-    elif origin == tuple and typing.get_args(t):
-        type_args = typing.get_args(t)
+    elif origin == tuple and typing_get_args(t):
+        type_args = typing_get_args(t)
         # Tuple[A, ...] means an any-length tuple of all As
         if type_args[1:] == (Ellipsis,):
             inner = expr_builder(type_args[0], depth + 1, direction)
@@ -345,8 +368,8 @@ def expr_builder(t: type, depth=0, direction=_FROM):
             return f
     elif (issubclass_safe(origin, abc.Sequence)
           and issubclass_safe(list, origin)
-          and typing.get_args(t)):
-        type_arg = typing.get_args(t)[0]
+          and typing_get_args(t)):
+        type_arg = typing_get_args(t)[0]
         inner = expr_builder(type_arg, depth + 1, direction)
 
         def f(expr):
@@ -355,8 +378,8 @@ def expr_builder(t: type, depth=0, direction=_FROM):
         return f
     elif (issubclass_safe(origin, abc.Mapping)
           and issubclass_safe(dict, origin)
-          and typing.get_args(t)):
-        key_type, value_type = typing.get_args(t)
+          and typing_get_args(t)):
+        key_type, value_type = typing_get_args(t)
 
         # TODO: Enums, dates and decimals should be trivial to add here
         if key_type not in (str, int, float, bool, UUID):
@@ -459,18 +482,18 @@ def referenced_types(cls):
     # If we support tuples or unions properly, this needsto return
     # multiple types
     def extract_types(t):
-        origin = typing.get_origin(t)
-        if origin == tuple and typing.get_args(t):
+        origin = typing_get_origin(t)
+        if origin == tuple and typing_get_args(t):
             xs = tuple()
-            for type_arg in typing.get_args(t):
+            for type_arg in typing_get_args(t):
                 xs += extract_types(type_arg)
             return xs
         if (origin == typing.Union
-                or issubclass_safe(origin, abc.Sequence)) and typing.get_args(t):
-            type_arg = typing.get_args(t)[0]
+                or issubclass_safe(origin, abc.Sequence)) and typing_get_args(t):
+            type_arg = typing_get_args(t)[0]
             return extract_types(type_arg)
-        elif issubclass_safe(origin, abc.Mapping) and typing.get_args(t):
-            key_type_arg, value_type_arg = typing.get_args(t)
+        elif issubclass_safe(origin, abc.Mapping) and typing_get_args(t):
+            key_type_arg, value_type_arg = typing_get_args(t)
             if key_type_arg is UUID:
                 return (UUID,) + extract_types(value_type_arg)
             return extract_types(value_type_arg)

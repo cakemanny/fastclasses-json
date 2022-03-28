@@ -1,0 +1,16 @@
+# compiled python files
+*.pyc
+__pycache__/
+build/
+
+*.egg-info
+.pytest_cache
+.mypy_cache
+
+.coverage*
+!.coveragerc
+
+# virtual environment nonsense
+venv
+env
+

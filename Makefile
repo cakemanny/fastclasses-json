@@ -4,7 +4,7 @@ venv: requirements.txt requirements-test.txt
 	$(PYTHON) -m venv venv
 	touch -t 01010000 venv
 	venv/bin/pip install --upgrade pip setuptools
-	venv/bin/pip install -r requirements-test.txt
+	venv/bin/pip install --upgrade -r requirements-test.txt
 	touch venv
 
 test: venv
@@ -12,6 +12,11 @@ test: venv
 
 lint: venv
 	venv/bin/flake8 fastclasses_json
+
+.PHONY: test.docker
+test.docker:
+	docker build . -f tests/Dockerfile.test -t fastclasses-json:tests
+	docker run -it --rm fastclasses-json:tests
 
 publish:
 	venv/bin/pip install --upgrade twine build
