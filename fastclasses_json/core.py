@@ -21,14 +21,13 @@ except Exception:
 
 PY_37 = sys.version_info[:2] == (3, 7)
 
-# Essentially if we are on python version 3.8 or above
-if PY_37:
-    import typing_extensions
-    typing_get_origin = typing_extensions.get_origin
-    typing_get_args = typing_extensions.get_args
+# We have to write the condition like this for mypy to recognise it
+if sys.version_info >= (3, 8):
+    from typing import get_origin as typing_get_origin
+    from typing import get_args as typing_get_args
 else:
-    typing_get_origin = typing.get_origin
-    typing_get_args = typing.get_args
+    from typing_extensions import get_origin as typing_get_origin
+    from typing_extensions import get_args as typing_get_args
 
 
 _FROM = 1
