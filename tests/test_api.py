@@ -605,6 +605,36 @@ def test_from_dict__optional_enum():
     assert B.from_dict({}) == B(None)
 
 
+def test_to_dict__list_of_optional_enum():
+    from enum import Enum
+
+    class A(Enum):
+        X = 'ex'
+        Y = 'why'
+
+    @dataclass_json
+    @dataclass
+    class B:
+        a: List[Optional[A]]
+
+    assert B([A.X, None, A.Y]).to_dict() == {'a': ['ex', None, 'why']}
+
+
+def test_from_dict__list_of_optional_enum():
+    from enum import Enum
+
+    class A(Enum):
+        X = 'ex'
+        Y = 'why'
+
+    @dataclass_json
+    @dataclass
+    class B:
+        a: List[Optional[A]]
+
+    assert B.from_dict({'a': ['ex', None, 'why']}) == B([A.X, None, A.Y])
+
+
 def test_to_dict__list_of_enum():
     from enum import Enum
 
