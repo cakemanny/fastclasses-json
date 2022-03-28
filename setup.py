@@ -5,7 +5,7 @@ with open('README.md', 'r', encoding='utf-8') as f:
 
 setup(
     name='fastclasses-json',
-    version='0.4.1',
+    version='0.5.0-dev',
     packages=find_packages(exclude=('tests*',)),
     package_data={"fastclasses_json": ["py.typed"]},
     author='Daniel Golding',
@@ -18,7 +18,10 @@ setup(
     },
     license='MIT',
     keywords='fast dataclasses json fastclasses',
-    python_requires='>=3.8',
+    python_requires='>=3.7',
+    install_requires=[
+        "typing_extensions;python_version=='3.7'"
+    ],
     extra_require={
         'dev': [
             'pytest',

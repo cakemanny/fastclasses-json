@@ -25,22 +25,9 @@ if hasattr(typing, 'get_origin'):
     typing_get_origin = typing.get_origin
     typing_get_args = typing.get_args
 else:
-    def typing_get_origin(tp):
-        if isinstance(tp, typing._GenericAlias):
-            return tp.__origin__
-        if tp is typing.Generic:
-            return typing.Generic
-        return None
-    import collections
-
-    def typing_get_args(tp):
-        if isinstance(tp, typing._GenericAlias) and not tp._special:
-            res = tp.__args__
-            if (typing_get_origin(tp) is collections.abc.Callable
-                    and res[0] is not Ellipsis):
-                res = (list(res[:-1]), res[-1])
-            return res
-        return ()
+    import typing_extensions
+    typing_get_origin = typing_extensions.get_origin
+    typing_get_args = typing_extensions.get_args
 
 
 _FROM = 1
