@@ -34,21 +34,21 @@ _FROM = 1
 _TO = 2
 
 
-def _process_class(cls, **kwargs):
+def _process_class(cls, **options):
 
     if not is_dataclass(cls):
         raise TypeError("must be called with a dataclass type")
 
-    _process_class_internal(cls, options=kwargs)
+    _process_class_internal(cls, options=options)
 
     def from_dict(cls, *args, **kwargs):
-        inst = cls._fastclasses_json_from_dict(*args, **kwargs)
-        cls.from_dict = cls._fastclasses_json_from_dict
+        inst = getattr(cls, _from_dict_func(options))(*args, **kwargs)
+        cls.from_dict = getattr(cls, _from_dict_func(options))
         return inst
 
     def to_dict(self, *args, **kwargs):
-        d = self._fastclasses_json_to_dict(*args, **kwargs)
-        cls.to_dict = cls._fastclasses_json_to_dict
+        d = getattr(self, _to_dict_func(options))(*args, **kwargs)
+        cls.to_dict = getattr(cls, _to_dict_func(options))
         return d
 
     cls.from_dict = classmethod(from_dict)
@@ -69,22 +69,38 @@ def _process_class(cls, **kwargs):
     return cls
 
 
+def _from_dict_func(options):
+    if options:
+        return '_fastclasses_json_from_dict_%x' % _hash_options(options)
+    return '_fastclasses_json_from_dict'
+
+
+def _to_dict_func(options):
+    if options:
+        return '_fastclasses_json_to_dict_%x' % _hash_options(options)
+    return '_fastclasses_json_to_dict'
+
+
+def _hash_options(options):
+    return abs(hash(tuple(options.items())))
+
+
 def _process_class_internal(cls, options):
 
     # Delay the building of our from_dict method until it is first called.
     # This allows the compilation to reference classes defined later in
     # the module.
     def _temp_from_dict(cls, *args, **kwarg):
-        _replace_from_dict(cls, options, '_fastclasses_json_from_dict')
-        return cls._fastclasses_json_from_dict(*args, **kwarg)
+        _replace_from_dict(cls, options, _from_dict_func(options))
+        return getattr(cls, _from_dict_func(options))(*args, **kwarg)
 
-    cls._fastclasses_json_from_dict = classmethod(_temp_from_dict)
+    setattr(cls, _from_dict_func(options), classmethod(_temp_from_dict))
 
     def _temp_to_dict(self, *args, **kwargs):
-        _replace_to_dict(cls, options, '_fastclasses_json_to_dict')
-        return self._fastclasses_json_to_dict(*args, **kwargs)
+        _replace_to_dict(cls, options, _to_dict_func(options))
+        return getattr(self, _to_dict_func(options))(*args, **kwargs)
 
-    cls._fastclasses_json_to_dict = _temp_to_dict
+    setattr(cls, _to_dict_func(options), _temp_to_dict)
 
     return cls
 
@@ -427,15 +443,15 @@ def expr_builder(t: type, options=None, depth=0, direction=_FROM):
     if is_dataclass(t):
         # Give indirectly referenced dataclasses a to_dict method without
         # trashing their public API
-        if not hasattr(t, '_fastclasses_json_from_dict'):
+        if not hasattr(t, _from_dict_func(options)):
             _process_class_internal(t, options)
 
         if direction == _FROM:
             def f(expr):
-                return f'{t.__name__}._fastclasses_json_from_dict({expr})'
+                return f'{t.__name__}.{_from_dict_func(options)}({expr})'
             return f
         else:
-            return lambda expr: f'({expr})._fastclasses_json_to_dict()'
+            return lambda expr: f'({expr}).{_to_dict_func(options)}()'
     elif issubclass_safe(t, Enum):
         if direction == _FROM:
             return lambda expr: f'{t.__name__}({expr})'

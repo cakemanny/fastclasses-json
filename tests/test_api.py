@@ -1271,7 +1271,6 @@ def test_field_name_transform():
     }) == SnakesOfCamels(snake_one=1, snake_two=2, snake_three=3)
 
 
-@pytest.mark.xfail(reason="FIXME!!")
 def test_field_name_transform__conflicting_transforms():
 
     def to_camel_case(field_name):
@@ -1321,8 +1320,8 @@ def test_field_name_transform__conflicting_transforms():
             'pythagorasOfSamos': 3
         }
     }
+    # TODO: add assertions for from_dict
 
-# TODO add tests for when transforms conflict
 # TODO add tests for when transforms are of the wrong type
 # TODO add tests for when transforms and field_name are given
 # TODO add tests for greater depth
