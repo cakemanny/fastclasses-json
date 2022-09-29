@@ -1248,3 +1248,81 @@ def test_from_dict__non_init_params():
     assert a.b == 'here'
     # Should the b be included or not
     a.to_dict()
+
+
+def test_field_name_transform():
+
+    def your_field_name_rewrite(field_name):
+        parts = field_name.split('_')
+        return parts[0] + ''.join(map(lambda s: s.capitalize(), parts[1:]))
+
+    @dataclass_json(field_name_transform=your_field_name_rewrite)
+    @dataclass
+    class SnakesOfCamels:
+        snake_one: int
+        snake_two: int
+        snake_three: int
+
+    assert SnakesOfCamels(1, 2, 3).to_dict() == {
+        'snakeOne': 1, 'snakeTwo': 2, 'snakeThree': 3
+    }
+    assert SnakesOfCamels.from_dict({
+        'snakeOne': 1, 'snakeTwo': 2, 'snakeThree': 3
+    }) == SnakesOfCamels(snake_one=1, snake_two=2, snake_three=3)
+
+
+@pytest.mark.xfail(reason="FIXME!!")
+def test_field_name_transform__conflicting_transforms():
+
+    def to_camel_case(field_name):
+        parts = field_name.split('_')
+        return parts[0] + ''.join(map(lambda s: s.capitalize(), parts[1:]))
+
+    def to_proper_case(field_name):
+        return ''.join(map(lambda s: s.capitalize(), field_name.split('_')))
+
+    @dataclass
+    class Adders:
+        pythagoras_of_samos: int
+
+    @dataclass_json(field_name_transform=to_camel_case)
+    @dataclass
+    class Snakes:
+        crowley: int
+        kaa: int
+        more_snakes: Adders
+
+    @dataclass_json(field_name_transform=to_proper_case)
+    @dataclass
+    class Mathematicians:
+        euclid: int
+        isaac_newton: int
+        more_mathematicians: Adders
+
+    assert Snakes(1, 2, Adders(3)).to_dict() == {
+        'crowley': 1,
+        'kaa': 2,
+        'moreSnakes': {
+            'pythagorasOfSamos': 3
+        }
+    }
+    assert Mathematicians(1, 2, Adders(3)).to_dict() == {
+        'Euclid': 1,
+        'IsaacNewton': 2,
+        'MoreMathematicians': {
+            'PythagorasOfSamos': 3
+        }
+    }
+    # check it's remained ok
+    assert Snakes(1, 2, Adders(3)).to_dict() == {
+        'crowley': 1,
+        'kaa': 2,
+        'moreSnakes': {
+            'pythagorasOfSamos': 3
+        }
+    }
+
+# TODO add tests for when transforms conflict
+# TODO add tests for when transforms are of the wrong type
+# TODO add tests for when transforms and field_name are given
+# TODO add tests for greater depth

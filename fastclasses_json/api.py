@@ -38,7 +38,7 @@ class JSONMixin:
         raise NotImplementedError(_ERR_MISSING_DECORATOR)
 
 
-def dataclass_json(cls=None):
+def dataclass_json(cls=None, *, field_name_transform=None):
     """
     Returns the same class that was passed in with to_dict, from_dict, to_json
     and from_json methods added.
@@ -55,5 +55,6 @@ def dataclass_json(cls=None):
         MyDataclass.from_json('{"my_field": "my value"}')
     """
     if cls is not None:
-        return _process_class(cls)
-    return _process_class
+        return _process_class(cls, field_name_transform=field_name_transform)
+
+    return lambda cls: _process_class(cls, field_name_transform=field_name_transform)

@@ -34,12 +34,12 @@ _FROM = 1
 _TO = 2
 
 
-def _process_class(cls):
+def _process_class(cls, **kwargs):
 
     if not is_dataclass(cls):
         raise TypeError("must be called with a dataclass type")
 
-    _process_class_internal(cls)
+    _process_class_internal(cls, options=kwargs)
 
     def from_dict(cls, *args, **kwargs):
         inst = cls._fastclasses_json_from_dict(*args, **kwargs)
@@ -69,19 +69,19 @@ def _process_class(cls):
     return cls
 
 
-def _process_class_internal(cls):
+def _process_class_internal(cls, options):
 
     # Delay the building of our from_dict method until it is first called.
     # This allows the compilation to reference classes defined later in
     # the module.
     def _temp_from_dict(cls, *args, **kwarg):
-        _replace_from_dict(cls, '_fastclasses_json_from_dict')
+        _replace_from_dict(cls, options, '_fastclasses_json_from_dict')
         return cls._fastclasses_json_from_dict(*args, **kwarg)
 
     cls._fastclasses_json_from_dict = classmethod(_temp_from_dict)
 
     def _temp_to_dict(self, *args, **kwargs):
-        _replace_to_dict(cls, '_fastclasses_json_to_dict')
+        _replace_to_dict(cls, options, '_fastclasses_json_to_dict')
         return self._fastclasses_json_to_dict(*args, **kwargs)
 
     cls._fastclasses_json_to_dict = _temp_to_dict
@@ -89,9 +89,9 @@ def _process_class_internal(cls):
     return cls
 
 
-def _replace_from_dict(cls, from_dict='from_dict'):
+def _replace_from_dict(cls, options, from_dict='from_dict'):
 
-    from_dict_src = _from_dict_source(cls)
+    from_dict_src = _from_dict_source(cls, options)
     from_dict_module = compile(
         from_dict_src, '<fastclass_generated_code>', 'exec'
     )
@@ -121,9 +121,9 @@ def _replace_from_dict(cls, from_dict='from_dict'):
     setattr(cls, from_dict, classmethod(from_dict_func))
 
 
-def _replace_to_dict(cls, to_dict='to_dict'):
+def _replace_to_dict(cls, options, to_dict='to_dict'):
 
-    to_dict_src = _to_dict_source(cls)
+    to_dict_src = _to_dict_source(cls, options)
     to_dict_module = compile(
         to_dict_src, '<fastclass_generated_code>', 'exec'
     )
@@ -148,7 +148,7 @@ def _replace_to_dict(cls, to_dict='to_dict'):
     setattr(cls, to_dict, to_dict_func)
 
 
-def _from_dict_source(cls):
+def _from_dict_source(cls, options=None):
 
     lines = [
         'def from_dict(cls, o, *, infer_missing):',
@@ -166,6 +166,9 @@ def _from_dict_source(cls):
         field = fields_by_name[name]
 
         input_name = name
+        if options and options.get('field_name_transform'):
+            input_name = options['field_name_transform'](name)
+            # TODO: check still str
         if has_meta(field, 'field_name'):
             input_name = field.metadata['fastclasses_json']['field_name']
             if not isinstance(input_name, str):
@@ -183,7 +186,7 @@ def _from_dict_source(cls):
 
         access = f'o.get({input_name!r})'
 
-        transform = expr_builder_from(field_type)
+        transform = expr_builder_from(field_type, options)
         if has_meta(field, 'decoder'):
             transform = decoder_expr(name)
 
@@ -209,7 +212,7 @@ def _from_dict_source(cls):
     return '\n'.join(lines)
 
 
-def _to_dict_source(cls):
+def _to_dict_source(cls, options=None):
 
     lines = [
         'def to_dict(self):',
@@ -225,7 +228,7 @@ def _to_dict_source(cls):
 
         access = f'self.{name}'
 
-        transform = expr_builder_to(field_type)
+        transform = expr_builder_to(field_type, options)
 
         # custom encoder and decoder routines
         field = fields_by_name[name]
@@ -234,6 +237,9 @@ def _to_dict_source(cls):
 
         # custom mapping of dataclass fieldnames to json field names
         output_name = name
+        if options and options.get('field_name_transform'):
+            output_name = options['field_name_transform'](name)
+            # TODO: check still str
         if has_meta(field, 'field_name'):
             output_name = field.metadata['fastclasses_json']['field_name']
             if not isinstance(output_name, str):
@@ -247,8 +253,8 @@ def _to_dict_source(cls):
             # of optional
             if (typing_get_origin(field_type) == typing.Union
                     # This is a bit yuk. Premature optimization 🙄
-                    and transform('x') == expr_builder_to(field_type)('x')):
-                transform = expr_builder_to(typing_get_args(field_type)[0])
+                    and transform('x') == expr_builder_to(field_type, options)('x')):
+                transform = expr_builder_to(typing_get_args(field_type)[0], options)
             lines.append(f'    value = {access}')
             lines.append(f'    if value is not None:')  # noqa: F541
             lines.append(f'        value = ' + transform('value'))  # noqa: E501,F541
@@ -298,15 +304,15 @@ def decoder_expr(name):
     return lambda expr: f'globals()["{name}#decoder"]({expr})'
 
 
-def expr_builder_from(t: type, depth=0):
-    return expr_builder(t, depth, direction=_FROM)
+def expr_builder_from(t: type, options, depth=0):
+    return expr_builder(t, options, depth, direction=_FROM)
 
 
-def expr_builder_to(t: type, depth=0):
-    return expr_builder(t, depth, direction=_TO)
+def expr_builder_to(t: type, options, depth=0):
+    return expr_builder(t, options, depth, direction=_TO)
 
 
-def expr_builder(t: type, depth=0, direction=_FROM):
+def expr_builder(t: type, options=None, depth=0, direction=_FROM):
     def identity(expr):
         return expr
 
@@ -316,7 +322,7 @@ def expr_builder(t: type, depth=0, direction=_FROM):
 
     if origin == typing.Union:
         type_arg = typing_get_args(t)[0]
-        inner = expr_builder(type_arg, depth + 1, direction)
+        inner = expr_builder(type_arg, options, depth + 1, direction)
 
         def f(expr):
             t0 = f'__{depth}'
@@ -330,7 +336,7 @@ def expr_builder(t: type, depth=0, direction=_FROM):
         type_args = typing_get_args(t)
         # Tuple[A, ...] means an any-length tuple of all As
         if type_args[1:] == (Ellipsis,):
-            inner = expr_builder(type_args[0], depth + 1, direction)
+            inner = expr_builder(type_args[0], options, depth + 1, direction)
 
             def f(expr):
                 t0 = f'__{depth}'
@@ -338,7 +344,7 @@ def expr_builder(t: type, depth=0, direction=_FROM):
             return f
         else:
             inners = [
-                expr_builder(type_arg, depth + 1, direction)
+                expr_builder(type_arg, options, depth + 1, direction)
                 for type_arg in type_args
             ]
 
@@ -364,7 +370,7 @@ def expr_builder(t: type, depth=0, direction=_FROM):
           and issubclass_safe(list, origin)
           and typing_get_args(t)):
         type_arg = typing_get_args(t)[0]
-        inner = expr_builder(type_arg, depth + 1, direction)
+        inner = expr_builder(type_arg, options, depth + 1, direction)
 
         def f(expr):
             t0 = f'__{depth}'
@@ -380,9 +386,9 @@ def expr_builder(t: type, depth=0, direction=_FROM):
             warnings.warn(f'to_json will not work for dict with key: {t}')
             return identity
 
-        inner = expr_builder(value_type, depth + 1, direction)
+        inner = expr_builder(value_type, options, depth + 1, direction)
 
-        key_func = expr_builder(key_type, depth + 1, direction)
+        key_func = expr_builder(key_type, options, depth + 1, direction)
         if direction == _FROM:
             if key_type is str:
                 pass
@@ -422,7 +428,7 @@ def expr_builder(t: type, depth=0, direction=_FROM):
         # Give indirectly referenced dataclasses a to_dict method without
         # trashing their public API
         if not hasattr(t, '_fastclasses_json_from_dict'):
-            _process_class_internal(t)
+            _process_class_internal(t, options)
 
         if direction == _FROM:
             def f(expr):
