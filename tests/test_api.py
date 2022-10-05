@@ -1216,7 +1216,7 @@ def test__custom_field_name__errors():
         a.to_dict()
 
     with pytest.raises(TypeError):
-        a.from_dict({99: 1})
+        A.from_dict({99: 1})
 
 
 def test__missing_type_params():
@@ -1320,8 +1320,74 @@ def test_field_name_transform__conflicting_transforms():
             'pythagorasOfSamos': 3
         }
     }
-    # TODO: add assertions for from_dict
 
-# TODO add tests for when transforms are of the wrong type
-# TODO add tests for when transforms and field_name are given
-# TODO add tests for greater depth
+    assert Snakes.from_dict({
+        'crowley': 1,
+        'kaa': 2,
+        'moreSnakes': {
+            'pythagorasOfSamos': 3
+        }
+    }) == Snakes(1, 2, Adders(3))
+    assert Mathematicians.from_dict({
+        'Euclid': 1,
+        'IsaacNewton': 2,
+        'MoreMathematicians': {
+            'PythagorasOfSamos': 3
+        }
+    }) == Mathematicians(1, 2, Adders(3))
+    # check it's remained ok
+    assert Snakes.from_dict({
+        'crowley': 1,
+        'kaa': 2,
+        'moreSnakes': {
+            'pythagorasOfSamos': 3
+        }
+    }) == Snakes(1, 2, Adders(3))
+
+
+def test_field_name_transform__errors():
+
+    def forget_to_return(field_name):
+        return
+
+    @dataclass_json(field_name_transform=forget_to_return)
+    @dataclass
+    class A:
+        x: int
+
+    with pytest.raises(TypeError) as exc:
+        A(1).to_dict()
+    assert 'must be str' in str(exc.value)
+    assert 'forget_to_return' in str(exc.value)
+
+    with pytest.raises(TypeError) as exc:
+        A.from_dict({'x': 1})
+    assert 'must be str' in str(exc.value)
+    assert 'forget_to_return' in str(exc.value)
+
+    @dataclass_json(field_name_transform=lambda fn: None)
+    @dataclass
+    class B:
+        x: int
+
+    with pytest.raises(TypeError) as exc:
+        B(1).to_dict()
+    assert 'must be str' in str(exc.value)
+
+    with pytest.raises(TypeError) as exc:
+        B.from_dict({'x': 1})
+    assert 'must be str' in str(exc.value)
+
+
+def test_field_name_transform__with_field_name():
+
+    @dataclass_json(field_name_transform=str.upper)
+    @dataclass
+    class Snakes:
+        snake_one: int = field(metadata={
+            "fastclasses_json": {"field_name": "worm"}
+        })
+        snake_two: int
+
+    assert Snakes(1, 2).to_dict() == {'worm': 1, 'SNAKE_TWO': 2}
+    assert Snakes.from_dict({'worm': 1, 'SNAKE_TWO': 2}) == Snakes(1, 2)
