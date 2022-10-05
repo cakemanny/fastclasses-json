@@ -1379,6 +1379,19 @@ def test_field_name_transform__errors():
     assert 'must be str' in str(exc.value)
 
 
+def test_field_name_transform__edge_case():
+    # This is weird but possible
+
+    @dataclass_json(field_name_transform=lambda fn: fn[0])
+    @dataclass
+    class A:
+        x1: int
+        x2: int
+
+    assert A(1, 2).to_dict() == {'x': 2}
+    assert A.from_dict({'x': 2}) == A(2, 2)
+
+
 def test_field_name_transform__with_field_name():
 
     @dataclass_json(field_name_transform=str.upper)
