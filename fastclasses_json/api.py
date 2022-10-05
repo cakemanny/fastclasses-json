@@ -1,4 +1,4 @@
-from typing import Union
+from typing import Union, Callable
 
 from .core import _process_class
 
@@ -38,7 +38,7 @@ class JSONMixin:
         raise NotImplementedError(_ERR_MISSING_DECORATOR)
 
 
-def dataclass_json(cls=None, *, field_name_transform=None):
+def dataclass_json(cls=None, *, field_name_transform: Callable[[str], str] = None):
     """
     Returns the same class that was passed in with to_dict, from_dict, to_json
     and from_json methods added.

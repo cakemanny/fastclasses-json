@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from fastclasses_json import dataclass_json
 import typing
 
@@ -34,3 +34,9 @@ print(A.from_dict({'x': 'hi'}, infer_missing=True))
 print(A.from_json('{"x":"hi"}'))
 print(A.from_json(b'{"x":"hi"}'))
 print(A.from_json('{"x":"hi"}', infer_missing=True))
+
+
+@dataclass_json(field_name_transform=lambda x: x.upper())
+@dataclass
+class Snakes:
+    snake_one: int
