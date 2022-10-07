@@ -5,9 +5,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+## [0.6.0] - 2022-10-07
 ### Added
 - `field_name_transform` option for allowing universal field name
-  tranformations
+  tranformations ([#7][#7])
 
 ## [0.5.0] - 2022-03-29
 ### Added
@@ -69,7 +71,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Support for Decimals and UUIDs
 
 <!-- VERSION LINKS START -->
-[Unreleased]: https://github.com/cakemanny/fastclasses-json/compare/v0.5.0...HEAD
+[Unreleased]: https://github.com/cakemanny/fastclasses-json/compare/v0.6.0...HEAD
+[0.6.0]: https://github.com/cakemanny/fastclasses-json/compare/v0.5.0...v0.6.0
 [0.5.0]: https://github.com/cakemanny/fastclasses-json/compare/v0.4.1...v0.5.0
 [0.4.1]: https://github.com/cakemanny/fastclasses-json/compare/v0.4.0...v0.4.1
 [0.4.0]: https://github.com/cakemanny/fastclasses-json/compare/v0.3.2...v0.4.0
@@ -85,3 +88,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [user-Borealin]: https://github.com/Borealin
 [#5]: https://github.com/cakemanny/fastclasses-json/issues/5
 [#6]: https://github.com/cakemanny/fastclasses-json/issues/6
+[#7]: https://github.com/cakemanny/fastclasses-json/issues/7
