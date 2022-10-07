@@ -129,7 +129,7 @@ in the field metadata dict.
   JSON or a dict into the python `dataclass`. Can be any callable.
 * `field_name`: the name the field should be called in the JSON output.
 
-### example
+#### example
 
 ```python
 @dataclass_json
@@ -151,6 +151,34 @@ class Coach:
 
 Coach("London Victoria", "Amsterdam Sloterdijk").to_dict()
 # {'from': 'LONDO', 'to': 'AMSTE'}
+```
+
+### Whole tree configuration options
+
+#### How to use other field naming conventions
+
+The `field_name_transform` option allows tranforming field names of all
+dataclasses that are serialized / deserialized.
+
+```python
+from __future__ import annotations
+from fastclasses_json import dataclass_json
+from dataclasses import dataclass
+
+@dataclass_json(field_name_transform=str.upper)
+@dataclass
+class Box:
+    dimensions: Dimensions
+    weight_in_g: int
+
+@dataclass
+class Dimensions:
+    height_in_mm: int
+    width_in_mm: int
+    depth_in_mm: int
+
+Box(Dimensions(12, 24, 35), 944).to_dict()
+# {'DIMENSIONS': {'HEIGHT_IN_MM': 12, 'WIDTH_IN_MM': 24, 'DEPTH_IN_MM': 35}, 'WEIGHT_IN_G': 944}
 ```
 
 
@@ -261,5 +289,11 @@ Cupboard.from_dict({'num_hats': 2}, infer_missing=True)
 ```
 
 [dataclasses-json]: https://github.com/lidatong/dataclasses-json/
+
+### `letter_case`
+Fastclasses JSON does not have `letter_case`, instead see
+`field_name_transform` under [Configuration](#configuration)
+which can achieve the same goals.
+
 
 <!-- TODO: write about nested Any? -->

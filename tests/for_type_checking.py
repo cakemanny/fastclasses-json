@@ -1,4 +1,4 @@
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from fastclasses_json import dataclass_json
 import typing
 
