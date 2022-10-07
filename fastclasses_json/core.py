@@ -181,21 +181,7 @@ def _from_dict_source(cls, options=None):
 
         field = fields_by_name[name]
 
-        input_name = name
-        if options and options.get('field_name_transform'):
-            input_name = options['field_name_transform'](name)
-            if not isinstance(input_name, str):
-                raise TypeError(
-                    "fastclasses_json, result of field_name_transform must be str: "
-                    f"{options['field_name_transform'].__name__}"
-                )
-        if has_meta(field, 'field_name'):
-            input_name = field.metadata['fastclasses_json']['field_name']
-            if not isinstance(input_name, str):
-                raise TypeError(
-                    "fastclasses_json, field_name must be str: "
-                    f"{cls.__name__}.{name}"
-                )
+        input_name = deduce_serialised_name(name, options, field, cls)
 
         has_default = (
             field.default is not MISSING
@@ -256,21 +242,7 @@ def _to_dict_source(cls, options=None):
             transform = encoder_expr(name)
 
         # custom mapping of dataclass fieldnames to json field names
-        output_name = name
-        if options and options.get('field_name_transform'):
-            output_name = options['field_name_transform'](name)
-            if not isinstance(output_name, str):
-                raise TypeError(
-                    "fastclasses_json, result of field_name_transform must be str: "
-                    f"{options['field_name_transform'].__name__}"
-                )
-        if has_meta(field, 'field_name'):
-            output_name = field.metadata['fastclasses_json']['field_name']
-            if not isinstance(output_name, str):
-                raise TypeError(
-                    "fastclasses_json, field_name must be str: "
-                    f"{cls.__name__}.{name}"
-                )
+        output_name = deduce_serialised_name(name, options, field, cls)
 
         if transform('x') != 'x':
             # since we have an is not none check, elide the first level
@@ -292,6 +264,25 @@ def _to_dict_source(cls, options=None):
     lines.append('    return result')
     lines.append('')
     return '\n'.join(lines)
+
+
+def deduce_serialised_name(name, options, field, cls):
+    serialised_name = name
+    if options and options.get('field_name_transform'):
+        serialised_name = options['field_name_transform'](name)
+        if not isinstance(serialised_name, str):
+            raise TypeError(
+                "fastclasses_json, result of field_name_transform must be str: "
+                f"{options['field_name_transform'].__name__}"
+            )
+    if has_meta(field, 'field_name'):
+        serialised_name = field.metadata['fastclasses_json']['field_name']
+        if not isinstance(serialised_name, str):
+            raise TypeError(
+                "fastclasses_json, field_name must be str: "
+                f"{cls.__name__}.{name}"
+            )
+    return serialised_name
 
 
 def encoders(cls):
