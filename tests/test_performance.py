@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from typing import List
+import sys
 import time
 
 from fastclasses_json import dataclass_json
@@ -44,4 +45,12 @@ def test_long_list():
     from_dict_time = t1 - t0
     manual_time = t2 - t1
 
-    assert from_dict_time < 3 * manual_time
+    # This is deceptive, since it includes the overhead of compiling
+    # from the side of fastclasses_json.
+    # In 3.11 the manual loop became 115% quicker, and the from_dict
+    # only 13% quicker.
+    expected_slowdown = 3
+    if sys.version_info >= (3, 11):
+        expected_slowdown = 6
+
+    assert from_dict_time < expected_slowdown * manual_time
