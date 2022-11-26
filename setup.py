@@ -1,11 +1,14 @@
 from setuptools import setup, find_packages
 
+# Updated by a script
+VERSION = "0.6.1"
+
 with open('README.md', 'r', encoding='utf-8') as f:
     readme = f.read()
 
 setup(
     name='fastclasses-json',
-    version='0.6.1-dev',
+    version=VERSION,
     packages=find_packages(exclude=('tests*',)),
     package_data={"fastclasses_json": ["py.typed"]},
     author='Daniel Golding',
