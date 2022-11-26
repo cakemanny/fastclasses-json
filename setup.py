@@ -5,7 +5,7 @@ with open('README.md', 'r', encoding='utf-8') as f:
 
 setup(
     name='fastclasses-json',
-    version='0.6.0',
+    version='0.6.1-dev',
     packages=find_packages(exclude=('tests*',)),
     package_data={"fastclasses_json": ["py.typed"]},
     author='Daniel Golding',
@@ -22,7 +22,7 @@ setup(
     install_requires=[
         "typing_extensions;python_version=='3.7'"
     ],
-    extra_require={
+    extras_require={
         'dev': [
             'pytest',
             'flake8',
