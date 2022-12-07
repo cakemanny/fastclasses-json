@@ -6,17 +6,16 @@ set -o pipefail
 cd "$(dirname "$0")/.."
 
 latest_version() {
-    fgrep -n '## [' CHANGELOG.md | grep -o '[0-9]\.[0-9]\.[0-9]' | head -1
+    fgrep -n '## [' "$1" | grep -o '[0-9]+\.[0-9]+\.[0-9]+' | head -1
 }
 
 new_version() {
-    # fgrep -n '## [' CHANGELOG.md | fgrep -v Unreleased | sed 's/\].*//'
-    latest=$(latest_version)
+    latest=$(latest_version CHANGELOG.md)
 
     unreleased_changes=$(sed -n '/## \[Unreleased/,/^## /p' CHANGELOG.md)
 
     if echo "$unreleased_changes" | fgrep -q '### Added'; then
-        echo "$latest" | awk -F . '{ print $1 "." ($2 + 1) ".0"}'
+        echo "$latest" | awk -F . '{ print $1 "." ($2 + 1) ".0" }'
         return
     fi
     if echo "$unreleased_changes" | fgrep -q '### Fixed'; then
@@ -27,7 +26,7 @@ new_version() {
 }
 
 main() {
-    latest=$(latest_version)
+    latest=$(latest_version CHANGELOG.md)
     v=$(new_version)
     if [ "$v" != "$latest" ]; then
         new_changelog=$(
@@ -60,4 +59,6 @@ main() {
     fi
 }
 
-main
+if [ "$(basename "$0")" = "release.sh" ]; then
+    main
+fi
