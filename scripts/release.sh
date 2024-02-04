@@ -6,7 +6,7 @@ set -o pipefail
 cd "$(dirname "$0")/.."
 
 latest_version() {
-    fgrep -n '## [' "$1" | grep -o '[0-9]+\.[0-9]+\.[0-9]+' | head -1
+    grep -F -n '## [' "$1" | grep -E -o '[0-9]+\.[0-9]+\.[0-9]+' | head -1
 }
 
 new_version() {
@@ -14,11 +14,11 @@ new_version() {
 
     unreleased_changes=$(sed -n '/## \[Unreleased/,/^## /p' CHANGELOG.md)
 
-    if echo "$unreleased_changes" | fgrep -q '### Added'; then
+    if echo "$unreleased_changes" | grep -F -q '### Added'; then
         echo "$latest" | awk -F . '{ print $1 "." ($2 + 1) ".0" }'
         return
     fi
-    if echo "$unreleased_changes" | fgrep -q '### Fixed'; then
+    if echo "$unreleased_changes" | grep -F -q '### Fixed'; then
         echo "$latest" | awk -F . '{ print $1 "." $2 "." ($3 + 1) }'
         return
     fi
@@ -43,11 +43,11 @@ main() {
     ./scripts/version_changelog
 
     # TODO: Adjust for dirtiness
-    sed -e 's/VERSION = .*/VERSION = "'$v'"/' -i '' setup.py
+    sed -e 's/VERSION = .*/VERSION = "'"$v"'"/' -i '' setup.py
 
-    if [ "$(git rev-parse HEAD)" != "$(git rev-parse HEAD)" ]; then
+    if [ "$(git rev-parse HEAD)" != "$(git rev-parse master)" ]; then
         echo "not on master"
-        exit
+        exit 1
     fi
 
     if ! git rev-parse v"$v" 2>/dev/null; then
