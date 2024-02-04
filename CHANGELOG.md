@@ -5,6 +5,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+## [0.7.0] - 2024-02-04
 ### Added
 - Support for Python 3.12
 
@@ -78,7 +80,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Support for Decimals and UUIDs
 
 <!-- VERSION LINKS START -->
-[Unreleased]: https://github.com/cakemanny/fastclasses-json/compare/v0.6.1...HEAD
+[Unreleased]: https://github.com/cakemanny/fastclasses-json/compare/v0.7.0...HEAD
+[0.7.0]: https://github.com/cakemanny/fastclasses-json/compare/v0.6.1...v0.7.0
 [0.6.1]: https://github.com/cakemanny/fastclasses-json/compare/v0.6.0...v0.6.1
 [0.6.0]: https://github.com/cakemanny/fastclasses-json/compare/v0.5.0...v0.6.0
 [0.5.0]: https://github.com/cakemanny/fastclasses-json/compare/v0.4.1...v0.5.0

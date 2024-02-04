@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 
 # Updated by a script
-VERSION = "0.6.1"
+VERSION = "0.7.0"
 
 with open('README.md', 'r', encoding='utf-8') as f:
     readme = f.read()
