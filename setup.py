@@ -43,6 +43,6 @@ setup(
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
         "Intended Audience :: Developers",
-        "Development Status :: 3 - Alpha",
+        "Development Status :: 4 - Beta",
     ],
 )

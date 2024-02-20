@@ -505,24 +505,23 @@ def referenced_types(cls):
     def extract_types(t):
         origin = typing_get_origin(t)
         if origin == tuple and typing_get_args(t):
-            xs = tuple()
             for type_arg in typing_get_args(t):
-                xs += extract_types(type_arg)
-            return xs
-        if (origin == typing.Union
+                yield from extract_types(type_arg)
+        elif (origin == typing.Union
                 or issubclass_safe(origin, abc.Sequence)) and typing_get_args(t):
             type_arg = typing_get_args(t)[0]
-            return extract_types(type_arg)
+            yield from extract_types(type_arg)
         elif issubclass_safe(origin, abc.Mapping) and typing_get_args(t):
             key_type_arg, value_type_arg = typing_get_args(t)
             if key_type_arg is UUID:
-                return (UUID,) + extract_types(value_type_arg)
-            return extract_types(value_type_arg)
+                yield UUID
+            yield from extract_types(value_type_arg)
         elif is_dataclass(t) or issubclass_safe(
             t, (Enum, date, datetime, Decimal, UUID)
         ):
-            return (t,)
-        return tuple()
+            yield t
+        else:
+            yield from tuple()
 
     types = {}
     for _, field_type in typing.get_type_hints(cls).items():

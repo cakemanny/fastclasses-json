@@ -20,7 +20,7 @@ class ParseError(Exception):
 def print_usage_and_exit(exit_code=1):
     out = sys.stdout if exit_code == 0 else sys.stderr
     print(f"{sys.argv[0]} <new version>", file=out)
-    exit(1)
+    exit(exit_code)
 
 
 def parse_version(line):
