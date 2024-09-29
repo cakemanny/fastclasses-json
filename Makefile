@@ -1,4 +1,4 @@
-PYTHON ?= python3.8
+PYTHON ?= python3
 
 venv: requirements.txt requirements-test.txt
 	$(PYTHON) -m venv venv
@@ -12,11 +12,6 @@ test: venv
 
 lint: venv
 	venv/bin/flake8 fastclasses_json
-
-.PHONY: test.docker
-test.docker:
-	docker build . -f tests/Dockerfile.test -t fastclasses-json:tests
-	docker run -it --rm fastclasses-json:tests
 
 publish:
 	venv/bin/pip install --upgrade twine build

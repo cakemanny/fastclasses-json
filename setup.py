@@ -21,10 +21,7 @@ setup(
     },
     license='MIT',
     keywords='fast dataclasses json fastclasses',
-    python_requires='>=3.7',
-    install_requires=[
-        "typing_extensions;python_version=='3.7'"
-    ],
+    python_requires='>=3.8',
     extras_require={
         'dev': [
             'pytest',
@@ -34,7 +31,6 @@ setup(
     },
     classifiers=[
         "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
         "Programming Language :: Python :: 3.10",

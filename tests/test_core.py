@@ -1,10 +1,7 @@
 from dataclasses import dataclass
 from enum import Enum
 from typing import List, Optional, Dict
-import sys
 import textwrap
-
-import pytest
 
 from fastclasses_json.api import dataclass_json
 from fastclasses_json import core
@@ -122,7 +119,6 @@ def test_from_dict_source__list_nested():
     )
 
 
-@pytest.mark.skipif(sys.version_info < (3, 8), reason="generates walrus operator")
 def test_from_dict_source__tuple():
     from typing import Tuple
 
@@ -146,36 +142,6 @@ def test_from_dict_source__tuple():
             value = o.get('c')
             if value is not None:
                 value = (__0:=(value),(A._fastclasses_json_from_dict(__0[0]),B._fastclasses_json_from_dict(__0[1]),))[1]
-            args['c'] = value
-            return cls(**args)
-        """
-    )
-
-
-@pytest.mark.skipif(sys.version_info >= (3, 8), reason="for python 3.7")
-def test_from_dict_source__tuple():
-    from typing import Tuple
-
-    @dataclass
-    class A:
-        a: str
-
-    @dataclass
-    class B:
-        b: str
-
-    @dataclass_json
-    @dataclass
-    class C:
-        c: Tuple[A, B]
-
-    assert core._from_dict_source(C) == textwrap.dedent(
-        """\
-        def from_dict(cls, o, *, infer_missing):
-            args = {}
-            value = o.get('c')
-            if value is not None:
-                value = (A._fastclasses_json_from_dict((value)[0]),B._fastclasses_json_from_dict((value)[1]),)
             args['c'] = value
             return cls(**args)
         """
@@ -247,7 +213,6 @@ def test_expr_builder__list_dataclass():
         '[A._fastclasses_json_from_dict(__0) for __0 in XXX]'
 
 
-@pytest.mark.skipif(sys.version_info < (3, 8), reason="generates walrus operator")
 def test_expr_builder__optional_enum():
 
     class A(Enum):
@@ -259,20 +224,6 @@ def test_expr_builder__optional_enum():
     builder = core.expr_builder(t)
 
     assert builder('XXX') == 'A(__0) if (__0:=(XXX)) is not None else None'
-
-
-@pytest.mark.skipif(sys.version_info >= (3, 8), reason="for python 3.7")
-def test_expr_builder__optional_enum__py37():
-
-    class A(Enum):
-        X = 'ex'
-        Y = 'why'
-
-    t = Optional[A]
-
-    builder = core.expr_builder(t)
-
-    assert builder('XXX') == 'A(XXX) if (XXX) is not None else None'
 
 
 def test_expr_builder__dict_enum():

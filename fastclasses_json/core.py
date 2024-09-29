@@ -19,15 +19,8 @@ try:
 except Exception:
     HAS_DATEUTIL = False
 
-PY_37 = sys.version_info[:2] == (3, 7)
-
-# We have to write the condition like this for mypy to recognise it
-if sys.version_info >= (3, 8):
-    from typing import get_origin as typing_get_origin
-    from typing import get_args as typing_get_args
-else:
-    from typing_extensions import get_origin as typing_get_origin
-    from typing_extensions import get_args as typing_get_args
+from typing import get_origin as typing_get_origin
+from typing import get_args as typing_get_args
 
 
 _FROM = 1
@@ -341,9 +334,6 @@ def expr_builder(t: type, options=None, depth=0, direction=_FROM):
 
         def f(expr):
             t0 = f'__{depth}'
-            if PY_37:
-                # Lazy solution for py37'ers
-                return f'{inner(expr)} if ({expr}) is not None else None'
             return f'{inner(t0)} if ({t0}:=({expr})) is not None else None'
 
         return f
@@ -370,13 +360,9 @@ def expr_builder(t: type, options=None, depth=0, direction=_FROM):
                 parts = ['(']
                 for i, inner in enumerate(inners):
                     xx = f'{t0}[{i}]'
-                    if PY_37:
-                        xx = f'({expr})[{i}]'
                     parts.append(f'{inner(xx)},')
                 parts.append(')')
                 e2 = ''.join(parts)
-                if PY_37:
-                    return e2
                 # e1 is just for evaluating expr no more than once
                 # e2 is the actual result
                 return f'({e1},{e2})[1]'
@@ -464,11 +450,6 @@ def expr_builder(t: type, options=None, depth=0, direction=_FROM):
                 if HAS_DATEUTIL and issubclass_safe(datetime, t):
                     return f'dateutil.parser.isoparse({expr})'
                 else:
-                    if PY_37:
-                        return (f'{t.__name__}.fromisoformat('
-                                f'({expr})[:-1]+"+00:00" if ({expr})[-1]=="Z" '
-                                f'else ({expr})'
-                                ')')
                     return (f'{t.__name__}.fromisoformat('
                             f'{t0}[:-1]+"+00:00" if ({t0}:={expr})[-1]=="Z" '
                             f'else {t0}'
