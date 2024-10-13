@@ -1,7 +1,7 @@
 Fastclasses JSON
 ================
 
-[![CI](https://github.com/cakemanny/fastclasses-json/actions/workflows/pythonpackage.yml/badge.svg)](https://github.com/cakemanny/fastclasses-json/actions/workflows/pythonpackage.yml?query=branch%3Amaster)
+[![CI](https://github.com/cakemanny/fastclasses-json/actions/workflows/test.yml/badge.svg)](https://github.com/cakemanny/fastclasses-json/actions/workflows/test.yml?query=branch%3Amaster)
 [![PyPI](https://img.shields.io/pypi/v/fastclasses-json)](https://pypi.org/project/fastclasses-json/)
 
 Inspired by [Dataclasses JSON](https://github.com/lidatong/dataclasses-json/).
