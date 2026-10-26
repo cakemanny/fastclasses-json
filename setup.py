@@ -21,7 +21,7 @@ setup(
     },
     license='MIT',
     keywords='fast dataclasses json fastclasses',
-    python_requires='>=3.8',
+    python_requires='>=3.10',
     extras_require={
         'dev': [
             'pytest',
@@ -31,12 +31,12 @@ setup(
     },
     classifiers=[
         "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.8",
-        "Programming Language :: Python :: 3.9",
         "Programming Language :: Python :: 3.10",
         "Programming Language :: Python :: 3.11",
         "Programming Language :: Python :: 3.12",
         "Programming Language :: Python :: 3.13",
+        "Programming Language :: Python :: 3.14",
+        "Programming Language :: Python :: 3.15",
         "Operating System :: OS Independent",
         "Intended Audience :: Developers",
         "Development Status :: 4 - Beta",

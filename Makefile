@@ -3,7 +3,7 @@ PYTHON ?= python3
 venv: requirements.txt requirements-test.txt
 	$(PYTHON) -m venv venv
 	touch -t 01010000 venv
-	venv/bin/pip install --upgrade pip setuptools
+	VIRTUAL_ENV=venv uv pip install --upgrade pip setuptools
 	venv/bin/pip install --upgrade -r requirements-test.txt
 	touch venv
 
